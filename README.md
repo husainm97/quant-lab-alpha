@@ -24,9 +24,8 @@
 
 1. Clone the repo:  
    ```bash
-   git clone https://github.com/yourusername/quant-lab.git
-   cd quant-lab
-
+   git clone https://github.com/yourusername/quant-lab-alpha.git
+   cd quant-lab-alpha
 
 2. Install Dependencies:  
    ```bash
