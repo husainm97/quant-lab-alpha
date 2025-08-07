@@ -10,3 +10,6 @@ def fetch_ff5_monthly():
         with z.open(z.namelist()[0]) as f:
             df = pd.read_csv(f, skiprows=3)
     return df
+
+df = fetch_ff5_monthly()
+print(df)
