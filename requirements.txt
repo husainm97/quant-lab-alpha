@@ -5,3 +5,4 @@ statsmodels==0.14.0
 scipy==1.10.1
 seaborn
 requests
+yfinance 
