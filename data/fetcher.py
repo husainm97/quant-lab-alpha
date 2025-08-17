@@ -23,9 +23,32 @@ def fetch(key: str):
     
     elif dtype == "zip":
         r = requests.get(cfg["url"])
+        r.raise_for_status()
         with zipfile.ZipFile(io.BytesIO(r.content)) as z:
             with z.open(z.namelist()[0]) as f:
-                df = pd.read_csv(f, skiprows=3)
+                raw = f.read().decode("latin-1")   # decode bytes -> string
+                lines = raw.splitlines()
+                start_idx = next(i for i, line in enumerate(lines) if line.strip() and line.strip()[0].isdigit())
+                data = []
+                # skip first 2 lines (or however many headers the file has)
+                for line in lines[start_idx:]:
+                    line = line.strip()
+                    print(line)
+                    if not line:   # stop at first blank line
+                        break
+                    '''
+                    first_col = line.split()[0]
+                    if not first_col.replace('.', '', 1).isdigit():  # stop at footer/non-numeric
+                        break
+                    '''
+                    data.append(line)
+
+                # load into DataFrame
+                df = pd.read_csv(
+                    io.StringIO("\n".join(data)),
+                    sep=r"\s+",      # split on whitespace
+                    index_col=0
+                )
         return df
 
     elif dtype == "yahoo":
