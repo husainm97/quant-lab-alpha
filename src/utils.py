@@ -7,6 +7,10 @@ import yfinance as yf
 
 # Placeholder functions, build in progress
 
+"""
+TO DO: 
+Add a currenry converter to remove currency fluctuations
+""" 
 def fetch_ff5_monthly():
     """
     Downloads Fama-French 5-factor monthly data from Ken French's site.
