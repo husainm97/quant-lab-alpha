@@ -9,7 +9,12 @@ import zipfile
 from data.registry import DATA_SOURCES
 
 def fetch(key: str):
-    """Fetch a dataset by key (like 'FF/SMB' or 'Yahoo/SP500')."""
+    """
+    Fetch a dataset by key (like 'FF/SMB' or 'Yahoo/SP500')
+    Key syntax is defined in ./registry.py
+    Currently supports csv, zip, yahoo
+    Should add txt support in next expansion
+    """
     if key not in DATA_SOURCES:
         raise KeyError(f"Unknown data key: {key}")
 
