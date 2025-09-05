@@ -67,3 +67,44 @@ def regress_ff5(portfolio_returns, ff_factors):
     X = sm.add_constant(X)
     model = sm.OLS(excess_returns, X).fit()
     return model
+
+def convert_currency_monthly(data: pd.Series, from_cur: str, to_cur: str = "USD") -> pd.Series:
+    """
+    Convert a time series of monthly returns from one currency into another.
+
+    Parameters
+    ----------
+    data : pd.Series
+        Monthly returns in 'from_cur' currency, indexed by datetime.
+    from_cur : str
+        Source currency code (e.g., 'EUR', 'GBP', 'JPY').
+    to_cur : str, optional
+        Target currency code (default 'USD').
+
+    Returns
+    -------
+    pd.Series
+        Returns converted into 'to_cur'.
+    """
+
+    if from_cur == to_cur:
+        return data
+
+    # Yahoo ticker for FX pair, e.g. "EURUSD=X"
+    ticker = f"{from_cur}{to_cur}=X"
+
+    # Get FX data (monthly close)
+    fx = yf.download(ticker,
+                     start=data.index.min(),
+                     end=data.index.max(),
+                     interval="1mo")["Adj Close"]
+
+    # Align FX index to monthly periods
+    fx.index = fx.index.to_period("M").to_timestamp()
+
+    # Compute FX monthly returns
+    fx_ret = fx.pct_change().dropna()
+
+    # Align and multiply returns
+    aligned_asset, aligned_fx = data.align(fx_ret, join="inner")
+    return (1 + aligned_asset) * (1 + aligned_fx) - 1
