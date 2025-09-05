@@ -12,7 +12,7 @@
 
 ## Features
 
-- Fetch Fama-French factor data from official sources  
+- Data fetcher from official sources (Ken French data library, yahoo finance, etc)  
 - Compute factor premiums for custom date ranges  
 - Perform multi-factor regressions on user portfolios  
 - Support for multiple portfolio input formats (e.g., CSV, Yahoo Finance tickers)  
