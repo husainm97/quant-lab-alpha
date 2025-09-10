@@ -4,6 +4,10 @@ import requests
 import zipfile
 import io
 import yfinance as yf
+from datetime import datetime
+from unittest.mock import patch
+from io import StringIO
+
 
 # Placeholder functions, build in progress
 
