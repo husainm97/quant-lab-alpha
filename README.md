@@ -1,12 +1,14 @@
 # quant-lab-alpha - Portfolio Factor Regression & Analysis Toolkit
 
-**Quant Lab** is a Python toolkit for portfolio analysis using the Fama-French 5-factor model and related quantitative finance tools. It helps you:
+Quant Lab is a Python toolkit for portfolio analysis built around the Fama–French 5-Factor Model and related quantitative finance methods. It provides a streamlined workflow to:
 
-- Download and process Fama-French factor data  
-- Calculate factor premiums over user-defined time periods (e.g., for academic paper replication or custom analysis)  
-- Build regressors to analyze portfolio returns against factor premiums  
-- Evaluate portfolio performance and risk metrics  
-- Easily extend the toolkit with additional quantitative finance methods (volatility tests, Markowitz optimization, etc.)
+- Download and preprocess Fama–French factor datasets
+- Compute factor premiums over custom time horizons (for academic replication or bespoke analysis)
+- Run regressions of portfolio returns against factor exposures
+- Evaluate performance and risk metrics for portfolios
+- Extend with additional methods (e.g. volatility tests, Markowitz optimization, custom factors)
+- Analyze UCITS ETFs and construct optimal portfolios under the Five-Factor framework
+- Explore explanatory Jupyter notebooks with clear, reproducible examples
 
 ---
 
