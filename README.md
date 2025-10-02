@@ -7,6 +7,7 @@
 - Build regressors to analyze portfolio returns against factor premiums  
 - Evaluate portfolio performance and risk metrics  
 - Easily extend the toolkit with additional quantitative finance methods (volatility tests, Markowitz optimization, etc.)
+- Analyse UCITS ETFs and build optimal portfolio based on the Five Factor Model
 
 ---
 
