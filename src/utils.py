@@ -4,6 +4,7 @@ import requests
 import zipfile
 import io
 import yfinance as yf
+from typing import Sequence
 from datetime import datetime
 from unittest.mock import patch
 from io import StringIO
@@ -112,3 +113,25 @@ def convert_currency_monthly(data: pd.Series, from_cur: str, to_cur: str = "USD"
     # Align and multiply returns
     aligned_asset, aligned_fx = data.align(fx_ret, join="inner")
     return (1 + aligned_asset) * (1 + aligned_fx) - 1
+    
+
+def apply_leverage(returns: Sequence[float], leverage: float, financing_rate_annual: float = 0.0):
+"""Apply leverage to a sequence of periodic returns and return net leveraged returns.
+
+
+Formula used: net_ret = L*r - (L-1)*fin_rate_periodic
+
+
+Args:
+returns: sequence of periodic returns (decimals).
+leverage: leverage factor L.
+financing_rate_annual: annual financing/carry rate.
+
+
+Returns:
+numpy array of net periodic returns after leverage cost.
+"""
+arr = np.asarray(returns, dtype=float)
+fr = (1.0 + financing_rate_annual) ** (1.0 / 12.0) - 1.0
+net = leverage * arr - max(0.0, leverage - 1.0) * fr
+return net
