@@ -2,6 +2,8 @@
 
 '''
 This is a temporary file to test the fetcher, references to local files may now be replaced using data.fetch(), any information on key-url-datatype may be noted in registry.py 
+Nex, we test a full process of importing a UCITS S&P500 ETF, and calculating the factor loadings over it's whole history
+This must be expanded to calculate "rolling" factor loadings with 10 year windows
 '''
 
 import data
