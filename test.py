@@ -10,9 +10,13 @@ import data
 
 
 def test_fetch():
+    """
+    This is a test function to import the Fama-French Factor data as well as Yahoo! Finance data using the in-built fetcher, and visualise the dataset 
+    """
     df_smb = data.fetch("FF/SMB")
     df_hml = data.fetch("FF/HML")
-    
+
+    # Check fetched data
     print(df_smb)
     print(df_hml)
     
