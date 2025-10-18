@@ -98,21 +98,38 @@ def convert_currency_monthly(data: pd.Series, from_cur: str, to_cur: str = "USD"
     # Yahoo ticker for FX pair, e.g. "EURUSD=X"
     ticker = f"{from_cur}{to_cur}=X"
 
+    # CRITICAL FIX 1: Fetch rates starting ONE MONTH BEFORE the first asset return 
+    # to ensure we capture the initial starting FX rate for the first period's return.
+    start_date = data.index.min() - pd.DateOffset(months=1)
+    end_date = data.index.max()
+
     # Get FX data (monthly close)
-    fx = yf.download(ticker,
-                     start=data.index.min(),
-                     end=data.index.max(),
-                     interval="1mo")["Adj Close"]
+    fx_data = yf.download(ticker,
+                          start=start_date,
+                          end=end_date,
+                          interval="1mo")
+    
+    if fx_data.empty:
+        return pd.Series([], dtype='float64') 
 
-    # Align FX index to monthly periods
-    fx.index = fx.index.to_period("M").to_timestamp()
+    fx_rates = fx_data["Adj Close"].sort_index()
 
-    # Compute FX monthly returns
-    fx_ret = fx.pct_change().dropna()
+    # Compute FX monthly returns (indexed by the 1st of the month, starting with the 2nd month)
+    fx_ret = fx_rates.pct_change().dropna()
 
-    # Align and multiply returns
-    aligned_asset, aligned_fx = data.align(fx_ret, join="inner")
-    return (1 + aligned_asset) * (1 + aligned_fx) - 1
+    # CRITICAL FIX 2: Align the length and force the index to match the asset returns index.
+    # This assumes the chronological order is correct, which it is in this monthly context.
+    
+    # Slice the FX returns to match the number of asset returns (removes any excess months)
+    fx_ret = fx_ret.iloc[:len(data)]
+    
+    # Force the FX returns index (e.g., 2023-02-01) to match the asset returns index (e.g., 2023-02-28)
+    fx_ret.index = data.index
+
+    # Align (which is now just a check since indices are forced) and multiply returns
+    converted_returns = (1 + data) * (1 + fx_ret) - 1
+    
+    return converted_returns
     
 
 def apply_leverage(returns: Sequence[float], leverage: float, financing_rate_annual: float = 0.0):
