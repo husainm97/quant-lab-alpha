@@ -1,34 +1,52 @@
-# quant-lab-alpha - Portfolio Factor Regression & Analysis Toolkit
+# quant-lab-alpha — Portfolio Factor Regression & Analysis Toolkit
 
-Quant Lab is a Python toolkit for portfolio analysis built around the Fama–French 5-Factor Model and related quantitative finance methods. It provides a streamlined workflow to:
-
-- Download and preprocess Fama–French factor datasets
-- Compute factor premiums over custom time horizons (for academic replication or bespoke analysis)
-- Run regressions of portfolio returns against factor exposures
-- Evaluate performance and risk metrics for portfolios
-- Extend with additional methods (e.g. volatility tests, Markowitz optimization, custom factors)
-- Analyze UCITS ETFs and construct optimal portfolios under the Five-Factor framework
-- Explore explanatory Jupyter notebooks with clear, reproducible examples
+**Quant Lab Alpha** is a Python toolkit for systematic portfolio analysis and factor-based investing.  
+It’s built around the **Fama–French Five-Factor Model** and modern quantitative finance extensions.  
+The framework provides a clean, reproducible workflow for academic replication, portfolio construction, and performance attribution.
 
 ---
 
-## Features
+## 🚀 Core Capabilities
 
-- Data fetcher from official sources (Ken French data library, yahoo finance, etc)  
-- Compute factor premiums for custom date ranges  
-- Perform multi-factor regressions on user portfolios  
-- Support for multiple portfolio input formats (e.g., CSV, Yahoo Finance tickers)  
-- Modular design for easy expansion with new tools and models  
+Quant Lab enables researchers and practitioners to:
+
+- Download and preprocess **Fama–French factor datasets** and market data  
+- Compute **factor premiums** over custom time horizons for replication or bespoke analysis  
+- Run **multi-factor regressions** on portfolio or fund returns  
+- Evaluate **performance and risk metrics** (alpha, beta, Sharpe, information ratio, etc.)  
+- Extend the toolkit with **custom factors**, **volatility measures**, or **Markowitz-style optimizations**  
+- Analyze **UCITS ETFs** and construct **optimal portfolios** under the Five-Factor framework  
+- Explore a suite of **explanatory Jupyter notebooks** with clear, reproducible examples  
 
 ---
 
-## Getting Started
+## 🧩 Features
 
-1. Clone the repo:  
+- **Official data integration:** Fetch data directly from the *Ken French Data Library*, *Yahoo Finance*, and other trusted sources  
+- **Flexible data structures:** Accepts CSVs, ticker lists, or user-supplied return matrices  
+- **Modular design:** Each module can run independently or as part of an automated workflow  
+- **Factor regression engine:** Estimate exposures, performance attribution, and portfolio loadings  
+- **Extendable analytics layer:** Plug in additional models or user-defined signals  
+
+---
+
+## 🧠 Ongoing Development
+
+Quant Lab Alpha is actively evolving. Current and planned improvements include:
+
+- 💱 **Currency conversion support:** Integrated FX normalization for cross-currency portfolios  
+- 🔄 **Rolling factor loadings:** Dynamic estimation of time-varying betas and factor sensitivities  
+- 📓 **Refined explanatory notebooks:** Improved structure, visualization, and reproducibility across use cases  
+- 🛠️ **Tooling for end-users:** Development of CLI and GUI interfaces for smoother interaction and automation  
+- ⚙️ **Enhanced portfolio diagnostics:** Advanced correlation matrices, covariance tracking, and stress testing modules  
+
+Contributions, issue reports, and pull requests are welcome.
+
+---
+
+## ⚡ Getting Started
+
+1. **Clone the repository**
    ```bash
    git clone https://github.com/yourusername/quant-lab-alpha.git
    cd quant-lab-alpha
-
-2. Install Dependencies:  
-   ```bash
-   pip install -r requirements.txt
