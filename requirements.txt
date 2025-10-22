@@ -6,3 +6,4 @@ scipy==1.10.1
 seaborn
 requests
 yfinance 
+tkinter
