@@ -5,7 +5,7 @@
 import numpy as np
 import pandas as pd
 from typing import Optional, Callable, Sequence
-from .utils import apply_leverage
+from .utilities import apply_leverage
 from .strategies import WithdrawalStrategy
 
 
