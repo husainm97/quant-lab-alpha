@@ -4,6 +4,13 @@
 It’s built around the **Fama–French Five-Factor Model** and modern quantitative finance extensions.  
 The framework provides a clean, reproducible workflow for academic replication, portfolio construction, and performance attribution.
 
+## ⚠️ Disclaimer
+
+**This repository is strictly for educational purposes.**  
+All calculations, regressions, and results are **not financial advice**.  
+Past performance does **not guarantee future results**.  
+Users are solely responsible for any investment decisions or applications derived from this toolkit.
+
 ---
 
 ## 🚀 Core Capabilities
