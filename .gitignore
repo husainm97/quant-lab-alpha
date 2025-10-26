@@ -1,0 +1,5 @@
+data/MSCI_USA_SCV.csv
+data/MSCI_USA_SCV_EUR.csv
+data/MSCU_USA_Small_Cap_Value.xlsx
+notebooks/comparison_data.ipynb
+notebooks/factor_premium_tests_cited.ipynb
