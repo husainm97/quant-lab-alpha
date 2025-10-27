@@ -39,6 +39,19 @@ def fetch_ff5_monthly():
     df = df.astype(float) / 100.0
     return df
 
+def rolling_factor_loadings_5f(df, window_months=60):
+    """
+    Compute rolling 5-factor betas for ETF_TV.
+    """
+    betas = []
+    for i in range(window_months, len(df)):
+        window = df.iloc[i-window_months:i]
+        y = window['ETF_TV'] - window['RF']
+        X = sm.add_constant(window[['Market','SMB','HML','RMW','CMA']])
+        model = sm.OLS(y, X).fit()
+        betas.append(model.params[['Market','SMB','HML','RMW','CMA']])
+    return pd.DataFrame(betas, index=df.index[window_months:], columns=['Market','SMB','HML','RMW','CMA'])
+
 def download_yahoo_prices(tickers, start, end):
     """
     Downloads adjusted close prices for a list of tickers.
@@ -133,22 +146,22 @@ def convert_currency_monthly(data: pd.Series, from_cur: str, to_cur: str = "USD"
     
 
 def apply_leverage(returns: Sequence[float], leverage: float, financing_rate_annual: float = 0.0):
-"""Apply leverage to a sequence of periodic returns and return net leveraged returns.
+    """
+    Apply leverage to a sequence of periodic returns and return net leveraged returns.
+    Formula used: net_ret = L*r - (L-1)*fin_rate_periodic
+
+    Args:
+    returns: sequence of periodic returns (decimals).
+    leverage: leverage factor L.
+    financing_rate_annual: annual financing/carry rate.
+
+    Returns:
+    numpy array of net periodic returns after leverage cost.
+    """
+    arr = np.asarray(returns, dtype=float)
+    fr = (1.0 + financing_rate_annual) ** (1.0 / 12.0) - 1.0
+    net = leverage * arr - max(0.0, leverage - 1.0) * fr
+    return net
 
 
-Formula used: net_ret = L*r - (L-1)*fin_rate_periodic
 
-
-Args:
-returns: sequence of periodic returns (decimals).
-leverage: leverage factor L.
-financing_rate_annual: annual financing/carry rate.
-
-
-Returns:
-numpy array of net periodic returns after leverage cost.
-"""
-arr = np.asarray(returns, dtype=float)
-fr = (1.0 + financing_rate_annual) ** (1.0 / 12.0) - 1.0
-net = leverage * arr - max(0.0, leverage - 1.0) * fr
-return net
