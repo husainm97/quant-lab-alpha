@@ -4,7 +4,7 @@
 It’s built around the **Fama–French Five-Factor Model** and modern quantitative finance extensions.  
 The framework provides a clean, reproducible workflow for academic replication, portfolio construction, and performance attribution.
 
-## ⚠️ Disclaimer
+Disclaimer
 
 **This repository is strictly for educational purposes.**  
 All calculations, regressions, and results are **not financial advice**.  
@@ -13,7 +13,7 @@ Users are solely responsible for any investment decisions or applications derive
 
 ---
 
-## 🚀 Core Capabilities
+Core Capabilities
 
 Quant Lab enables researchers and practitioners to:
 
@@ -27,7 +27,7 @@ Quant Lab enables researchers and practitioners to:
 
 ---
 
-## 🧩 Features
+Features
 
 - **Official data integration:** Fetch data directly from the *Ken French Data Library*, *Yahoo Finance*, and other trusted sources  
 - **Flexible data structures:** Accepts CSVs, ticker lists, or user-supplied return matrices  
@@ -37,21 +37,21 @@ Quant Lab enables researchers and practitioners to:
 
 ---
 
-## 🧠 Ongoing Development
+Ongoing Development
 
 Quant Lab Alpha is actively evolving. Current and planned improvements include:
 
-- 💱 **Currency conversion support:** Integrated FX normalization for cross-currency portfolios  
-- 🔄 **Rolling factor loadings:** Dynamic estimation of time-varying betas and factor sensitivities  
-- 📓 **Refined explanatory notebooks:** Improved structure, visualization, and reproducibility across use cases  
-- 🛠️ **Tooling for end-users:** Development of CLI and GUI interfaces for smoother interaction and automation  
-- ⚙️ **Enhanced portfolio diagnostics:** Advanced correlation matrices, covariance tracking, and stress testing modules  
+-  **Currency conversion support:** Integrated FX normalization for cross-currency portfolios  
+-  **Rolling factor loadings:** Dynamic estimation of time-varying betas and factor sensitivities  
+-  **Refined explanatory notebooks:** Improved structure, visualization, and reproducibility across use cases  
+-  **Tooling for end-users:** Development of CLI and GUI interfaces for smoother interaction and automation  
+-  **Enhanced portfolio diagnostics:** Advanced correlation matrices, covariance tracking, and stress testing modules  
 
 Contributions, issue reports, and pull requests are welcome.
 
 ---
 
-## ⚡ Getting Started
+Getting Started
 
 1. **Clone the repository**
    ```bash
