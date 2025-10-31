@@ -8,6 +8,10 @@ if script_dir not in sys.path:
 
 import portfolio_module as portfolio_module
 
+'''
+Probably need to make an investor an 'agent' who performs actions on the portfolio to run sims with different strategies.  
+'''
+
 class Investor:
     def __init__(self, name, capital, income=0.0, withdrawal_strategy=None, risk_tolerance=0.5):
         self.name = name
