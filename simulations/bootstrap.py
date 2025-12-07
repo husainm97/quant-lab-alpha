@@ -6,11 +6,14 @@ and plots portfolio wealth paths over a multi-year horizon with a translucent 1-
 Uses portfolio_module.Portfolio and withdrawal strategies from withdrawal_strategies.py.
 """
 
+# bootstrap.py
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import sys
+import matplotlib.ticker as mtick
 
 # Ensure local imports work
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -18,125 +21,174 @@ if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
 from portfolio_module import Portfolio
-from withdrawal_strategies import pct_of_initial_capital, pct_of_current_capital, fixed_amount
-
-# ------------------------ PARAMETERS ------------------------
-DAYS_PER_YEAR = 365
-YEARS = 30
-N_DAYS = DAYS_PER_YEAR * YEARS
-N_ASSETS = 3
-SEED = 42
-N_BOOTSTRAP = 10000
-BLOCK_SIZE = 365*5  # days per block
-START_CAPITAL = 1_000_000.0
-WEIGHTS = [0.2, 0.3, 0.5]
-LEVERAGE = 1.25
-ANNUAL_INTEREST = 0.05
-
-# Select withdrawal strategy
-strategy = pct_of_initial_capital(initial_capital=START_CAPITAL, rate=0.027, min_withdrawal=40_000, max_withdrawal=100_000)
-
-# ETF specs: annual mu, sigma
-ETF_SPECS = [
-    (0.06, 0.12),
-    (0.05, 0.05),
-    (0.10, 0.20),
-]
-# ------------------------------------------------------------
-
-rng = np.random.default_rng(SEED)
-
-def make_ar1_returns(mu_annual, sigma_annual, n_days, phi=0.2):
-    mu_daily = mu_annual / DAYS_PER_YEAR
-    sigma_daily = sigma_annual / np.sqrt(DAYS_PER_YEAR)
-    eps = rng.normal(0, sigma_daily, size=n_days)
-    r = np.zeros(n_days)
-    for t in range(1, n_days):
-        r[t] = phi * r[t-1] + eps[t]
-    r += (mu_daily - r.mean())
-    return r
-
-# Generate synthetic historical returns
-returns_df = pd.DataFrame({f"ETF{i+1}": make_ar1_returns(mu, sig, N_DAYS)
-                           for i, (mu, sig) in enumerate(ETF_SPECS)})
-
-# Block bootstrap helper
-def block_bootstrap_series(series: np.ndarray, block_size: int, n_samples: int, rng=None):
-    if rng is None:
-        rng = np.random.default_rng()
-    n = len(series)
-    blocks = []
-    k = int(np.ceil(n_samples / block_size))
-    for _ in range(k):
-        start = rng.integers(0, n - block_size + 1)
-        blocks.append(series[start : start + block_size])
-    return np.concatenate(blocks)[:n_samples]
-
-# Initialize portfolio
-weights = np.array(WEIGHTS) / np.sum(WEIGHTS)
-portfolio_obj = Portfolio(name="Bootstrap Portfolio")
-for i, w in enumerate(weights):
-    portfolio_obj.add_asset(f"ETF{i+1}", float(w))
-portfolio_obj.apply_leverage(LEVERAGE, ANNUAL_INTEREST)
-
-daily_interest_cost = ANNUAL_INTEREST * (LEVERAGE - 1) / DAYS_PER_YEAR
-
-# Run block bootstrap simulations
-wealth_paths = np.zeros((N_BOOTSTRAP, N_DAYS + 1))
-wealth_paths[:, 0] = START_CAPITAL
-
-for b in range(N_BOOTSTRAP):
-    resampled = np.column_stack([block_bootstrap_series(returns_df.iloc[:, j].values, BLOCK_SIZE, N_DAYS, rng)
-                                 for j in range(N_ASSETS)])
-    daily_port_returns = (resampled @ weights) * LEVERAGE - daily_interest_cost
-
-    w = START_CAPITAL
-    for t in range(N_DAYS):
-        w = w * (1 + daily_port_returns[t])
-        # apply withdrawal strategy annually
-        if t % DAYS_PER_YEAR == 0 and t > 0:
-            w -= strategy(w)
-        wealth_paths[b, t+1] = w
-
-# Compute statistics
-mean_path = wealth_paths.mean(axis=0)
-std_path = wealth_paths.std(axis=0)
-final_wealth = wealth_paths[:, -1]
-p16, p50, p84 = np.percentile(final_wealth, [16, 50, 84])
-
-# Plot
-plt.figure(figsize=(10,6))
-xs = np.arange(N_DAYS+1)
-for i in range(min(50, N_BOOTSTRAP)):
-    plt.plot(xs, wealth_paths[i], alpha=0.08, linewidth=0.8)
-plt.plot(xs, mean_path, label='Mean wealth', linewidth=2)
-plt.fill_between(xs, mean_path - std_path, mean_path + std_path, alpha=0.25, label='±1 σ')
-
-plt.title('Block Bootstrap: Portfolio Wealth Paths')
-plt.xlabel('Days')
-plt.ylabel('Wealth')
-plt.grid(alpha=0.3)
-#plt.legend()
-
-txt = (
-    f"Start: ${START_CAPITAL:,.0f}\n"
-    f"Mean final: ${mean_path[-1]:,.0f}\n"
-    f"P16: ${p16:,.0f}  P50: ${p50:,.0f}  P84: ${p84:,.0f}\n"
-    f"Leverage: {LEVERAGE}  Interest (annual): {ANNUAL_INTEREST:.2%}  Block size: {BLOCK_SIZE}d"
+from withdrawal_strategies import (
+    fixed_pct_initial,
+    pct_of_current_capital,
+    guardrail_pct,
+    bucket_strategy
 )
-plt.annotate(txt, xy=(0.02,0.98), xycoords='axes fraction', va='top', fontsize=9, bbox=dict(boxstyle='round', alpha=0.12))
 
-plt.tight_layout()
-plt.show()
+def run_simulation(portfolio_obj: Portfolio = None, returns_df: pd.DataFrame = None, config=None):
+    """
+    Run a block bootstrap Monte Carlo simulation for a portfolio.
 
-# Summary
-print("--- Summary ---")
-print(f"Start capital: ${START_CAPITAL:,.0f}")
-print(f"Mean final wealth: ${mean_path[-1]:,.2f}")
-print(f"Median final wealth: ${p50:,.2f}")
-print(f"P16 / P84: ${p16:,.2f} / ${p84:,.2f}")
-print(f"Number of bootstrap trials: {N_BOOTSTRAP}")
+    Args:
+        portfolio_obj: Portfolio object with tickers, weights, leverage, and optional price data.
+        returns_df: Optional DataFrame with precomputed returns (columns = tickers, index = dates).
+        config: Optional simulation config dict.
 
-res_df = pd.DataFrame({'final_wealth': final_wealth})
-#res_df.to_csv('bootstrap_final_wealth.csv', index=False)
-#print('Saved final-wealth samples to bootstrap_final_wealth.csv')
+    Returns:
+        all_results: dict of simulation results per withdrawal strategy
+        fig: matplotlib figure with wealth paths
+    """
+    if config is None:
+        config = {}
+
+    DAYS_PER_YEAR = config.get("DAYS_PER_YEAR", 252)
+    YEARS = config.get("YEARS", 30)
+    N_DAYS = DAYS_PER_YEAR * YEARS
+    SEED = config.get("SEED", 42)
+    N_BOOTSTRAP = config.get("N_BOOTSTRAP", 2000)
+    BLOCK_SIZE = config.get("BLOCK_SIZE", 252 * 5)
+    START_CAPITAL = config.get("START_CAPITAL", 1_000_000.0)
+    TARGET_WEALTH = config.get("TARGET_WEALTH", 2_000_000)
+
+    rng = np.random.default_rng(SEED)
+
+    if returns_df is not None:
+        # Use provided returns directly
+        tickers = list(returns_df.columns)
+        N_ASSETS = len(tickers)
+        returns_df = returns_df.copy()
+    elif portfolio_obj is not None:
+        tickers = list(portfolio_obj.constituents.keys())
+        N_ASSETS = len(tickers)
+        returns_df = pd.DataFrame()
+
+        for ticker in tickers:
+            df = portfolio_obj.data.get(ticker)
+            if df is None:
+                df = fetch(f"Yahoo/{ticker}")
+                portfolio_obj.data[ticker] = df
+
+            if 'Adj Close' in df.columns:
+                price_series = df['Adj Close']
+            elif 'Close' in df.columns:
+                price_series = df['Close']
+            else:
+                raise ValueError(f"Ticker {ticker} has no Close or Adj Close column")
+
+            returns_df[ticker] = price_series.pct_change().dropna()/100
+
+        if returns_df.empty:
+            raise ValueError("No valid return data found for portfolio tickers")
+    else:
+        raise ValueError("Either a portfolio object or a returns DataFrame must be provided")
+
+    weights = np.array([portfolio_obj.constituents[t] for t in tickers]) if portfolio_obj else np.ones(N_ASSETS) / N_ASSETS
+    leverage = portfolio_obj.leverage if portfolio_obj else 1.0
+    interest_rate = portfolio_obj.interest_rate if portfolio_obj else 0.0
+
+    # -------------------
+    # Block bootstrap helper
+    # -------------------
+    def block_bootstrap_series(series, block_size, n_samples, rng_local=None):
+        if rng_local is None:
+            rng_local = np.random.default_rng()
+        n = len(series)
+        if n == 0:
+            raise ValueError("Empty series provided to block bootstrap")
+        block_size = min(block_size, n)
+        blocks = []
+        k = int(np.ceil(n_samples / block_size))
+        for _ in range(k):
+            start = rng_local.integers(0, n - block_size + 1)
+            blocks.append(series[start:start + block_size])
+        return np.concatenate(blocks)[:n_samples]
+
+    # -------------------
+    # Generate bootstrap paths
+    # -------------------
+    all_paths = np.zeros((N_BOOTSTRAP, N_DAYS, N_ASSETS))
+    for b in range(N_BOOTSTRAP):
+        all_paths[b] = np.column_stack([
+            block_bootstrap_series(returns_df[col].values, BLOCK_SIZE, N_DAYS, rng)
+            for col in tickers
+        ])
+
+    daily_port_returns_all = (all_paths @ weights) * leverage
+    daily_interest_cost = interest_rate * (leverage - 1) / DAYS_PER_YEAR
+    daily_port_returns_all -= daily_interest_cost
+
+    # -------------------
+    # Withdrawal strategies
+    # -------------------
+    strategies = {
+        "Fixed 4%": fixed_pct_initial(initial_capital=START_CAPITAL, rate=0.04),
+        "Variable 4%": pct_of_current_capital(rate=0.04),
+        "Guardrail 2.5–5%": guardrail_pct(min_rate=0.025, max_rate=0.05),
+        "Bucket Strategy": bucket_strategy(cash_years=3, annual_withdrawal=50_000)
+    }
+
+    all_results = {}
+    xs = np.arange(N_DAYS + 1)
+
+    # -------------------
+    # Run simulation
+    # -------------------
+    for strat_name, strategy in strategies.items():
+        wealth_paths = np.zeros((N_BOOTSTRAP, N_DAYS + 1))
+        wealth_paths[:, 0] = START_CAPITAL
+
+        for b in range(N_BOOTSTRAP):
+            w = START_CAPITAL
+            for t in range(N_DAYS):
+                w = w * (1 + daily_port_returns_all[b, t])
+                if t % DAYS_PER_YEAR == 0 and t > 0:
+                    w -= strategy(w)
+                wealth_paths[b, t + 1] = w
+
+        final_wealth = wealth_paths[:, -1]
+        terminated = (wealth_paths < 0).any(axis=1)
+
+        all_results[strat_name] = {
+            "wealth_paths": wealth_paths,
+            "mean_path": wealth_paths.mean(axis=0),
+            "std_path": wealth_paths.std(axis=0),
+            "final_wealth": final_wealth,
+            "terminated": terminated,
+            "fail_rate": terminated.mean() * 100,
+            "p16": np.percentile(final_wealth, 16),
+            "p50": np.percentile(final_wealth, 50),
+            "p84": np.percentile(final_wealth, 84),
+            "prob_target": (final_wealth >= TARGET_WEALTH).mean() * 100,
+        }
+
+    # -------------------
+    # Plot results
+    # -------------------
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12), sharex=True)
+    axes = axes.flatten()
+    for ax, (strat_name, res) in zip(axes, all_results.items()):
+        wp = res["wealth_paths"]
+        ax.fill_between(xs, 0, -START_CAPITAL*0.5, color='red', alpha=0.1)
+        for i in range(min(50, N_BOOTSTRAP)):
+            ax.plot(xs, np.where(wp[i] >= 0, wp[i], np.nan), color='blue', alpha=0.08)
+        ax.plot(xs, res["mean_path"], color='black', linewidth=2)
+        ax.fill_between(xs,
+                        res["mean_path"] - res["std_path"],
+                        res["mean_path"] + res["std_path"],
+                        alpha=0.2)
+        txt = (
+            f"Fail rate: {res['fail_rate']:.1f}%\n"
+            f"P16/P50/P84: ${res['p16']:,.0f}/${res['p50']:,.0f}/${res['p84']:,.0f}\n"
+            f"Prob ≥ ${TARGET_WEALTH:,}: {res['prob_target']:.1f}%"
+        )
+        ax.annotate(txt, xy=(0.02, 0.95), xycoords='axes fraction',
+                    va='top', fontsize=9, bbox=dict(boxstyle='round', alpha=0.1))
+        ax.set_title(strat_name)
+        ax.yaxis.set_major_formatter(mtick.StrMethodFormatter('${x:,.0f}'))
+        ax.grid(alpha=0.3)
+
+    plt.tight_layout()
+    return all_results, fig

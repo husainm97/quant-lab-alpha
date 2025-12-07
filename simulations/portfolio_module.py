@@ -1,5 +1,9 @@
+import sys
+from pathlib import Path
 from typing import List, Dict
 import numpy as np
+sys.path.append(str(Path(__file__).resolve().parent.parent))  # adds project/ to path
+from data.fetcher import fetch
 
 class Portfolio:
     def __init__(self, name: str = "My Portfolio"):
@@ -8,19 +12,27 @@ class Portfolio:
         self.leverage: float = 1.0
         self.interest_rate: float = 0.0
         self.cash: float = 0.0  # optional — for unallocated funds or interest accrual
-    
-    def add_asset(self, ticker: str, weight: float):
-        """Add or update an asset weight in the portfolio."""
+        self.data: Dict[str, "pd.DataFrame"] = {}  # ticker -> fetched price/return DataFrame
+
+    def add_asset(self, ticker: str, weight: float, df: "pd.DataFrame" = None):
+        """
+        Add or update an asset weight in the portfolio.
+        Optionally store its fetched data as a DataFrame.
+        """
         if weight < 0:
             raise ValueError("Weight cannot be negative.")
         self.constituents[ticker] = weight
+        if df is not None:
+            self.data[ticker] = df
         self._normalize_weights()
 
     def remove_asset(self, ticker: str):
-        """Remove an asset from the portfolio."""
+        """Remove an asset and its data from the portfolio."""
         if ticker in self.constituents:
             del self.constituents[ticker]
-            self._normalize_weights()
+        if ticker in self.data:
+            del self.data[ticker]
+        self._normalize_weights()
 
     def _normalize_weights(self):
         """Ensure total allocation sums to 1 (100%) unless leveraging."""
@@ -51,9 +63,11 @@ class Portfolio:
     def reset(self):
         """Clear the portfolio."""
         self.constituents.clear()
+        self.data.clear()
         self.leverage = 1.0
         self.interest_rate = 0.0
         self.cash = 0.0
+
 
     def summary(self):
         """Readable portfolio summary."""
