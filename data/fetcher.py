@@ -5,16 +5,25 @@ import yfinance as yf
 import requests
 import io
 import zipfile
-
 from data.registry import DATA_SOURCES
 
 def fetch(key: str):
     """
-    Fetch a dataset by key (like 'FF/SMB' or 'Yahoo/SP500')
-    Key syntax is defined in ./registry.py
-    Currently supports csv, zip, yahoo
-    Should add txt support in next expansion
+    Fetch a dataset by key.
+    Key examples:
+        - 'FF/SMB' → CSV/ZIP sources
+        - 'Yahoo/AAPL' → dynamic Yahoo ticker download
     """
+    # Check if this is a dynamic Yahoo ticker request
+    if key.startswith("Yahoo/"):
+        ticker = key.split("/")[1]
+        # Download daily data from Yahoo
+        df = yf.download(ticker, progress=False)
+        if df.empty:
+            raise ValueError(f"No data returned from Yahoo for ticker {ticker}")
+        return df
+
+    # Otherwise, look up in DATA_SOURCES
     if key not in DATA_SOURCES:
         raise KeyError(f"Unknown data key: {key}")
 
@@ -31,38 +40,21 @@ def fetch(key: str):
         r.raise_for_status()
         with zipfile.ZipFile(io.BytesIO(r.content)) as z:
             with z.open(z.namelist()[0]) as f:
-                raw = f.read().decode("latin-1")   # decode bytes -> string
+                raw = f.read().decode("latin-1")
                 lines = raw.splitlines()
                 start_idx = next(i for i, line in enumerate(lines) if line.strip() and line.strip()[0].isdigit())
                 data = []
-                # skip first 2 lines (or however many headers the file has)
                 for line in lines[start_idx:]:
                     line = line.strip()
-                    print(line)
-                    if not line:   # stop at first blank line
+                    if not line:
                         break
-                    '''
-                    first_col = line.split()[0]
-                    if not first_col.replace('.', '', 1).isdigit():  # stop at footer/non-numeric
-                        break
-                    '''
                     data.append(line)
-
-                # load into DataFrame
-                df = pd.read_csv(
-                    io.StringIO("\n".join(data)),
-                    sep=r"\s+",      # split on whitespace
-                    index_col=0
-                )
+                df = pd.read_csv(io.StringIO("\n".join(data)), sep=r"\s+", index_col=0)
         return df
 
-    elif dtype == "yahoo":
-        ticker = cfg["ticker"]
-        return yf.download(ticker)
-
     elif dtype == "custom":
-        # Placeholder: dynamically call a custom handler if you want
         raise NotImplementedError("Custom handler not implemented yet")
 
     else:
         raise ValueError(f"Unsupported data type: {dtype}")
+

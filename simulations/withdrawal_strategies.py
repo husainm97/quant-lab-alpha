@@ -47,6 +47,8 @@ def guardrail_pct(min_rate: float = 0.025, max_rate: float = 0.05, benchmark_gro
         else:
             # linear interpolation between min and max
             rate = min_rate + (ratio - 0.8)/(1.0-0.8) * (max_rate - min_rate)
+
+         
         return current_wealth * rate
     return withdraw
 

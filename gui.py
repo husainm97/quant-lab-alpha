@@ -8,6 +8,9 @@ Options for Markowitz optimisation, 5 factor analysis and retirement spending si
 
 import tkinter as tk
 from tkinter import ttk, messagebox
+from simulations.portfolio_module import Portfolio
+from data.fetcher import fetch
+
 
 class PortfolioGUI:
     def __init__(self, root):
@@ -19,6 +22,8 @@ class PortfolioGUI:
         self.strategy_params = {}
         self.leverage = 1.0
         self.interest_rate = 0.0
+        self.portfolio_obj = Portfolio()
+
 
         self._build_ui()
 
@@ -85,7 +90,25 @@ class PortfolioGUI:
             )
             return
 
-        self.portfolio.append({"Source": source, "Ticker": ticker, "Allocation": allocation})
+        # Fetch data for the ticker
+        try:
+            if source.lower() == "yahoo":
+                df = fetch(f"Yahoo/{ticker}")
+            else:
+                # You can extend this to other sources if you define them in your registry
+                df = fetch(f"{source}/{ticker}")
+
+            if df.empty:
+                messagebox.showwarning("Data Warning", f"No data returned for {ticker} from {source}.")
+                return
+
+        except Exception as e:
+            messagebox.showerror("Fetch Error", f"Failed to fetch {ticker} from {source}:\n{e}")
+            return
+
+        # Add asset with data to portfolio
+        self.portfolio.append({"Source": source, "Ticker": ticker, "Allocation": allocation, "Data": df})
+        self.portfolio_obj.add_asset(ticker, allocation / 100, df=df)
         self.tree.insert("", "end", values=(source, ticker, f"{allocation:.1f}%"))
         self._update_total_allocation()
 
@@ -94,6 +117,7 @@ class PortfolioGUI:
         for row in self.tree.get_children():
             self.tree.delete(row)
         self._update_total_allocation()
+        self.portfolio_obj.reset()
         messagebox.showinfo("Portfolio Reset", "Portfolio cleared successfully.")
 
     def _update_total_allocation(self):
@@ -117,12 +141,12 @@ class PortfolioGUI:
         )
 
         ttk.Label(frame, text="Leverage (x):").grid(row=0, column=1, padx=5)
-        self.leverage_var = tk.DoubleVar(value=1.0)
+        self.leverage_var = tk.DoubleVar(value=10.0)
         self.leverage_entry = ttk.Entry(frame, textvariable=self.leverage_var, width=10, state="disabled")
         self.leverage_entry.grid(row=0, column=2, padx=5)
 
         ttk.Label(frame, text="Borrow Rate (%):").grid(row=0, column=3, padx=5)
-        self.interest_var = tk.DoubleVar(value=0.0)
+        self.interest_var = tk.DoubleVar(value=5.0)
         self.interest_entry = ttk.Entry(frame, textvariable=self.interest_var, width=10, state="disabled")
         self.interest_entry.grid(row=0, column=4, padx=5)
 
@@ -132,8 +156,18 @@ class PortfolioGUI:
         self.interest_entry.config(state=state)
 
         if not self.use_leverage.get():
-            self.leverage_var.set(1.0)
+            self.leverage_var.set(0.0)
             self.interest_var.set(0.0)
+
+        if self.use_leverage.get():
+            lev = self.leverage_var.get()
+            rate = self.interest_var.get() / 100
+            try:
+                self.portfolio_obj.apply_leverage(lev, rate)
+            except ValueError as e:
+                messagebox.showerror("Leverage Error", str(e))
+        else:
+            self.portfolio_obj.apply_leverage(10.0, 5.0)
 
     # =============================
     # Strategy Section
@@ -216,13 +250,72 @@ class PortfolioGUI:
     # Placeholder Action Functions
     # =============================
     def analyse_portfolio(self):
-        messagebox.showinfo("Analysis", "Portfolio analysis will be added later.")
+        summary = self.portfolio_obj.summary()
+        msg = (
+            f"Name: {summary['Name']}\n"
+            f"Total Allocation: {summary['Total Allocation']:.2f}\n"
+            f"Leverage: {summary['Leverage']:.2f}\n"
+            f"Interest Rate: {summary['Interest Rate']:.4f}\n"
+            f"Assets:\n"
+        )
+        for ticker, w in summary["Constituents"].items():
+            msg += f"  {ticker}: {w*100:.1f}%\n"
+        messagebox.showinfo("Portfolio Summary", msg)
 
     def run_monte_carlo(self):
-        messagebox.showinfo("Monte Carlo", "Monte Carlo simulation placeholder.")
+        try:
+            from simulations.bootstrap import run_simulation
+
+            if not self.portfolio_obj.constituents:
+                messagebox.showwarning("No Assets", "Add assets to the portfolio before running Monte Carlo.")
+                return
+
+            results, fig = run_simulation(portfolio_obj=self.portfolio_obj)
+
+            # display results (same as before)
+            summary = []
+            for strat, res in results.items():
+                line = (
+                    f"{strat}:\n"
+                    f"  Fail rate: {res['fail_rate']:.1f}%\n"
+                    f"  Median final wealth: ${res['p50']:,.0f}\n"
+                    f"  Chance to reach target: {res['prob_target']:.1f}%\n"
+                )
+                summary.append(line)
+
+            messagebox.showinfo("Bootstrap Simulation Complete", "\n\n".join(summary))
+            fig.show()
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Monte Carlo failed:\n{e}")
 
     def run_markowitz(self):
-        messagebox.showinfo("Markowitz", "Markowitz optimization placeholder.")
+        try:
+            from simulations.markowitz import run_markowitz
+
+            # self.data must already be a DataFrame of monthly returns
+            result = run_markowitz(self.data)
+
+            weights = result["weights"]
+            ret = result["expected_return"]
+            vol = result["volatility"]
+            sharpe = result["sharpe"]
+
+            pretty = "\n".join(
+                f"{col}: {weights[i]:.3f}"
+                for i, col in enumerate(self.data.columns)
+            )
+
+            messagebox.showinfo(
+                "Markowitz Optimisation",
+                f"Optimal Weights:\n\n{pretty}\n\n"
+                f"Expected Return: {ret:.4f}\n"
+                f"Volatility: {vol:.4f}\n"
+                f"Sharpe: {sharpe:.4f}"
+            )
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Markowitz optimisation failed:\n{e}")
 
 
 if __name__ == "__main__":
