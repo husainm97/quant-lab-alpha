@@ -28,167 +28,171 @@ from withdrawal_strategies import (
     bucket_strategy
 )
 
-def run_simulation(portfolio_obj: Portfolio = None, returns_df: pd.DataFrame = None, config=None):
+def run_simulation(
+    portfolio_obj: Portfolio = None,
+    returns_df: pd.DataFrame = None,
+    config: dict = None
+):
     """
-    Run a block bootstrap Monte Carlo simulation for a portfolio.
+    Run a block-bootstrap Monte Carlo simulation using monthly returns.
 
     Args:
-        portfolio_obj: Portfolio object with tickers, weights, leverage, and optional price data.
-        returns_df: Optional DataFrame with precomputed returns (columns = tickers, index = dates).
-        config: Optional simulation config dict.
+        portfolio_obj: Portfolio object (tickers, weights, leverage, optional price data)
+        returns_df: Optional precomputed monthly returns DataFrame
+        config: Dict with simulation params
 
     Returns:
-        all_results: dict of simulation results per withdrawal strategy
-        fig: matplotlib figure with wealth paths
+        all_results: dict of results per strategy
+        fig: matplotlib figure
     """
+
     if config is None:
         config = {}
 
-    DAYS_PER_YEAR = config.get("DAYS_PER_YEAR", 252)
-    YEARS = config.get("YEARS", 30)
-    N_DAYS = DAYS_PER_YEAR * YEARS
+    # ------------------------
+    # Simulation parameters
+    # ------------------------
+    MONTHS_PER_YEAR = 12
     SEED = config.get("SEED", 42)
     N_BOOTSTRAP = config.get("N_BOOTSTRAP", 2000)
-    BLOCK_SIZE = config.get("BLOCK_SIZE", 252 * 5)
-    START_CAPITAL = config.get("START_CAPITAL", 1_000_000.0)
+    BLOCK_SIZE = config.get("BLOCK_SIZE", 60)  # 5 years in months
+    START_CAPITAL = config.get("START_CAPITAL", 1_000_000)
     TARGET_WEALTH = config.get("TARGET_WEALTH", 2_000_000)
 
     rng = np.random.default_rng(SEED)
 
+    print("Running sim!")
+
+    # ------------------------
+    # Prepare returns
+    # ------------------------
     if returns_df is not None:
-        # Use provided returns directly
+        returns_df = returns_df.copy()
         tickers = list(returns_df.columns)
         N_ASSETS = len(tickers)
-        returns_df = returns_df.copy()
+        N_MONTHS = returns_df.shape[0]
+
     elif portfolio_obj is not None:
-        tickers = list(portfolio_obj.constituents.keys())
+        # get monthly returns aligned to maximal common range
+
+        returns_df = portfolio_obj.get_common_monthly_returns()
+        tickers = list(returns_df.columns)
         N_ASSETS = len(tickers)
-        returns_df = pd.DataFrame()
+        N_MONTHS = returns_df.shape[0]
 
-        for ticker in tickers:
-            df = portfolio_obj.data.get(ticker)
-            if df is None:
-                df = fetch(f"Yahoo/{ticker}")
-                portfolio_obj.data[ticker] = df
-
-            if 'Adj Close' in df.columns:
-                price_series = df['Adj Close']
-            elif 'Close' in df.columns:
-                price_series = df['Close']
-            else:
-                raise ValueError(f"Ticker {ticker} has no Close or Adj Close column")
-
-            returns_df[ticker] = price_series.pct_change().dropna()/100
-
-        if returns_df.empty:
-            raise ValueError("No valid return data found for portfolio tickers")
     else:
-        raise ValueError("Either a portfolio object or a returns DataFrame must be provided")
+        raise ValueError("Provide either portfolio_obj or returns_df")
 
-    weights = np.array([portfolio_obj.constituents[t] for t in tickers]) if portfolio_obj else np.ones(N_ASSETS) / N_ASSETS
+    print("Returns ready!")
+    # ------------------------
+    # Weights and leverage
+    # ------------------------
+    print(portfolio_obj)
+    weights = np.array([portfolio_obj.constituents[t] for t in tickers]) if portfolio_obj else np.ones(N_ASSETS)/N_ASSETS
     leverage = portfolio_obj.leverage if portfolio_obj else 1.0
     interest_rate = portfolio_obj.interest_rate if portfolio_obj else 0.0
-
-    # -------------------
+    monthly_interest = interest_rate * (leverage - 1) / MONTHS_PER_YEAR
+    print(f'Using leverage: {leverage}')
+    # ------------------------
     # Block bootstrap helper
-    # -------------------
-    def block_bootstrap_series(series, block_size, n_samples, rng_local=None):
-        if rng_local is None:
-            rng_local = np.random.default_rng()
+    # ------------------------
+    def block_bootstrap(series, block_size, n_samples):
         n = len(series)
-        if n == 0:
-            raise ValueError("Empty series provided to block bootstrap")
-        block_size = min(block_size, n)
+        block_size = min(block_size, max(1, n//2))
         blocks = []
         k = int(np.ceil(n_samples / block_size))
         for _ in range(k):
-            start = rng_local.integers(0, n - block_size + 1)
-            blocks.append(series[start:start + block_size])
+            start = rng.integers(0, n - block_size + 1)
+            blocks.append(series[start:start+block_size])
         return np.concatenate(blocks)[:n_samples]
 
-    # -------------------
-    # Generate bootstrap paths
-    # -------------------
-    all_paths = np.zeros((N_BOOTSTRAP, N_DAYS, N_ASSETS))
+    # ------------------------
+    # Generate portfolio return paths
+    # ------------------------
+    all_paths = np.zeros((N_BOOTSTRAP, N_MONTHS, N_ASSETS))
     for b in range(N_BOOTSTRAP):
         all_paths[b] = np.column_stack([
-            block_bootstrap_series(returns_df[col].values, BLOCK_SIZE, N_DAYS, rng)
+            block_bootstrap(returns_df[col].values, BLOCK_SIZE, N_MONTHS)
             for col in tickers
         ])
+    port_returns = (all_paths @ weights) * leverage - monthly_interest
 
-    daily_port_returns_all = (all_paths @ weights) * leverage
-    daily_interest_cost = interest_rate * (leverage - 1) / DAYS_PER_YEAR
-    daily_port_returns_all -= daily_interest_cost
-
-    # -------------------
+    # ------------------------
     # Withdrawal strategies
-    # -------------------
+    # ------------------------
     strategies = {
-        "Fixed 4%": fixed_pct_initial(initial_capital=START_CAPITAL, rate=0.04),
-        "Variable 4%": pct_of_current_capital(rate=0.04),
-        "Guardrail 2.5–5%": guardrail_pct(min_rate=0.025, max_rate=0.05),
+        "Fixed 4%": fixed_pct_initial(START_CAPITAL, 0.04),
+        "Variable 4%": pct_of_current_capital(0.04),
+        "Guardrail 2.5-5%": guardrail_pct(0.025, 0.05),
         "Bucket Strategy": bucket_strategy(cash_years=3, annual_withdrawal=50_000)
     }
 
     all_results = {}
-    xs = np.arange(N_DAYS + 1)
+    xs = np.arange(N_MONTHS + 1)
 
-    # -------------------
-    # Run simulation
-    # -------------------
-    for strat_name, strategy in strategies.items():
-        wealth_paths = np.zeros((N_BOOTSTRAP, N_DAYS + 1))
+    # ------------------------
+    # Run simulations
+    # ------------------------
+    for name, strategy in strategies.items():
+        wealth_paths = np.zeros((N_BOOTSTRAP, N_MONTHS + 1))
         wealth_paths[:, 0] = START_CAPITAL
-
         for b in range(N_BOOTSTRAP):
             w = START_CAPITAL
-            for t in range(N_DAYS):
-                w = w * (1 + daily_port_returns_all[b, t])
-                if t % DAYS_PER_YEAR == 0 and t > 0:
+            for t in range(N_MONTHS):
+                w *= 1 + port_returns[b, t]
+                if t % MONTHS_PER_YEAR == 0 and t > 0:
                     w -= strategy(w)
-                wealth_paths[b, t + 1] = w
+                wealth_paths[b, t+1] = w
 
         final_wealth = wealth_paths[:, -1]
         terminated = (wealth_paths < 0).any(axis=1)
 
-        all_results[strat_name] = {
+        all_results[name] = {
             "wealth_paths": wealth_paths,
             "mean_path": wealth_paths.mean(axis=0),
             "std_path": wealth_paths.std(axis=0),
             "final_wealth": final_wealth,
             "terminated": terminated,
-            "fail_rate": terminated.mean() * 100,
+            "fail_rate": terminated.mean()*100,
             "p16": np.percentile(final_wealth, 16),
             "p50": np.percentile(final_wealth, 50),
             "p84": np.percentile(final_wealth, 84),
-            "prob_target": (final_wealth >= TARGET_WEALTH).mean() * 100,
+            "prob_target": (final_wealth >= TARGET_WEALTH).mean()*100
         }
 
-    # -------------------
-    # Plot results
-    # -------------------
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12), sharex=True)
+    # ------------------------
+    # Plot
+    # ------------------------
+    n_strats = len(strategies)
+    n_cols = 2
+    n_rows = int(np.ceil(n_strats / n_cols))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(16,12), sharex=True)
     axes = axes.flatten()
-    for ax, (strat_name, res) in zip(axes, all_results.items()):
+
+    for ax, (name, res) in zip(axes, all_results.items()):
         wp = res["wealth_paths"]
         ax.fill_between(xs, 0, -START_CAPITAL*0.5, color='red', alpha=0.1)
         for i in range(min(50, N_BOOTSTRAP)):
-            ax.plot(xs, np.where(wp[i] >= 0, wp[i], np.nan), color='blue', alpha=0.08)
+            ax.plot(xs, np.where(wp[i]>=0, wp[i], np.nan), color='blue', alpha=0.08)
+            ax.plot(xs, np.where(wp[i]<0, wp[i], np.nan), '--', color='red', alpha=0.15)
         ax.plot(xs, res["mean_path"], color='black', linewidth=2)
         ax.fill_between(xs,
-                        res["mean_path"] - res["std_path"],
-                        res["mean_path"] + res["std_path"],
+                        res["mean_path"]-res["std_path"],
+                        res["mean_path"]+res["std_path"],
                         alpha=0.2)
         txt = (
             f"Fail rate: {res['fail_rate']:.1f}%\n"
             f"P16/P50/P84: ${res['p16']:,.0f}/${res['p50']:,.0f}/${res['p84']:,.0f}\n"
             f"Prob ≥ ${TARGET_WEALTH:,}: {res['prob_target']:.1f}%"
         )
-        ax.annotate(txt, xy=(0.02, 0.95), xycoords='axes fraction',
-                    va='top', fontsize=9, bbox=dict(boxstyle='round', alpha=0.1))
-        ax.set_title(strat_name)
+        ax.annotate(txt, xy=(0.02,0.95), xycoords='axes fraction', va='top', fontsize=9,
+                    bbox=dict(boxstyle='round', alpha=0.1))
+        ax.set_title(name)
         ax.yaxis.set_major_formatter(mtick.StrMethodFormatter('${x:,.0f}'))
         ax.grid(alpha=0.3)
 
+    for ax in axes[n_strats:]:
+        ax.axis('off')
+    axes[-1].set_xlabel("Months")
     plt.tight_layout()
     return all_results, fig

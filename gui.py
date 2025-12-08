@@ -24,7 +24,6 @@ class PortfolioGUI:
         self.interest_rate = 0.0
         self.portfolio_obj = Portfolio()
 
-
         self._build_ui()
 
     # =============================
@@ -141,33 +140,42 @@ class PortfolioGUI:
         )
 
         ttk.Label(frame, text="Leverage (x):").grid(row=0, column=1, padx=5)
-        self.leverage_var = tk.DoubleVar(value=10.0)
+        self.leverage_var = tk.DoubleVar(value=1.0)
         self.leverage_entry = ttk.Entry(frame, textvariable=self.leverage_var, width=10, state="disabled")
         self.leverage_entry.grid(row=0, column=2, padx=5)
 
         ttk.Label(frame, text="Borrow Rate (%):").grid(row=0, column=3, padx=5)
-        self.interest_var = tk.DoubleVar(value=5.0)
+        self.interest_var = tk.DoubleVar(value=0.0)
         self.interest_entry = ttk.Entry(frame, textvariable=self.interest_var, width=10, state="disabled")
         self.interest_entry.grid(row=0, column=4, padx=5)
 
     def _toggle_leverage(self):
+        # enable/disable entries
         state = "normal" if self.use_leverage.get() else "disabled"
         self.leverage_entry.config(state=state)
         self.interest_entry.config(state=state)
 
-        if not self.use_leverage.get():
-            self.leverage_var.set(0.0)
-            self.interest_var.set(0.0)
+        # read current entry values and apply
+        lev = max(1.0, self.leverage_var.get()) if self.use_leverage.get() else 1.0
+        rate = max(0.0, self.interest_var.get()/100) if self.use_leverage.get() else 0.0
 
+        try:
+            self.portfolio_obj.apply_leverage(lev, rate)
+            print(f"Applied leverage={self.portfolio_obj.leverage}, interest={self.portfolio_obj.interest_rate}")
+        except ValueError as e:
+            messagebox.showerror("Leverage Error", str(e))
+
+    def get_portfolio_leverage_settings(self):
+        """Return leverage & interest to use based on checkbox & entry fields."""
         if self.use_leverage.get():
-            lev = self.leverage_var.get()
-            rate = self.interest_var.get() / 100
-            try:
-                self.portfolio_obj.apply_leverage(lev, rate)
-            except ValueError as e:
-                messagebox.showerror("Leverage Error", str(e))
+            lev = max(1.0, self.leverage_var.get())
+            rate = max(0.0, self.interest_var.get() / 100)
         else:
-            self.portfolio_obj.apply_leverage(10.0, 5.0)
+            lev = 1.0
+            rate = 0.0
+        return lev, rate
+
+
 
     # =============================
     # Strategy Section
@@ -270,7 +278,10 @@ class PortfolioGUI:
                 messagebox.showwarning("No Assets", "Add assets to the portfolio before running Monte Carlo.")
                 return
 
+            lev, rate = self.get_portfolio_leverage_settings()
+            self.portfolio_obj.apply_leverage(lev, rate)
             results, fig = run_simulation(portfolio_obj=self.portfolio_obj)
+
 
             # display results (same as before)
             summary = []
@@ -291,31 +302,20 @@ class PortfolioGUI:
 
     def run_markowitz(self):
         try:
-            from simulations.markowitz import run_markowitz
+            from simulations.markowitz import plot_markowitz_gui
 
-            # self.data must already be a DataFrame of monthly returns
-            result = run_markowitz(self.data)
+            if not hasattr(self, "portfolio_obj") or not self.portfolio_obj.constituents:
+                raise ValueError("Portfolio has no assets. Add assets first.")
 
-            weights = result["weights"]
-            ret = result["expected_return"]
-            vol = result["volatility"]
-            sharpe = result["sharpe"]
+            returns_df = self.portfolio_obj.get_common_monthly_returns()
 
-            pretty = "\n".join(
-                f"{col}: {weights[i]:.3f}"
-                for i, col in enumerate(self.data.columns)
-            )
-
-            messagebox.showinfo(
-                "Markowitz Optimisation",
-                f"Optimal Weights:\n\n{pretty}\n\n"
-                f"Expected Return: {ret:.4f}\n"
-                f"Volatility: {vol:.4f}\n"
-                f"Sharpe: {sharpe:.4f}"
-            )
+            top = tk.Toplevel(self.root)
+            top.title("Markowitz Efficient Frontier")
+            plot_markowitz_gui(top, returns_df, self.portfolio_obj, risk_free=0.02)
 
         except Exception as e:
             messagebox.showerror("Error", f"Markowitz optimisation failed:\n{e}")
+
 
 
 if __name__ == "__main__":
