@@ -257,23 +257,29 @@ class PortfolioGUI:
     # =============================
     # Placeholder Action Functions
     # =============================
+# inside your main Tkinter app
+
+
+
     def analyse_portfolio(self):
-        summary = self.portfolio_obj.summary()
-        msg = (
-            f"Name: {summary['Name']}\n"
-            f"Total Allocation: {summary['Total Allocation']:.2f}\n"
-            f"Leverage: {summary['Leverage']:.2f}\n"
-            f"Interest Rate: {summary['Interest Rate']:.4f}\n"
-            f"Assets:\n"
-        )
-        for ticker, w in summary["Constituents"].items():
-            msg += f"  {ticker}: {w*100:.1f}%\n"
-        messagebox.showinfo("Portfolio Summary", msg)
+        # Do not use until currency conversion is implemented!!!
+        try:
+            from src.five_factor_model import run_ff5_analysis
+
+            if not self.portfolio_obj.constituents:
+                messagebox.showwarning("No Assets", "Add assets to the portfolio before running Monte Carlo.")
+                return
+
+            lev, rate = self.get_portfolio_leverage_settings()
+            self.portfolio_obj.apply_leverage(lev, rate)
+            run_ff5_analysis(self.root, self.portfolio_obj)
+        except Exception as e:
+            messagebox.showerror("Error", f"Regression failed:\n{e}")
+
 
     def run_monte_carlo(self):
         try:
             from simulations.bootstrap import run_simulation
-
             if not self.portfolio_obj.constituents:
                 messagebox.showwarning("No Assets", "Add assets to the portfolio before running Monte Carlo.")
                 return
