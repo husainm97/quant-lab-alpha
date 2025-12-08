@@ -6,6 +6,7 @@ import requests
 import io
 import zipfile
 from data.registry import DATA_SOURCES
+from datetime import datetime
 
 def fetch(key: str):
     """
@@ -17,15 +18,19 @@ def fetch(key: str):
     # Check if this is a dynamic Yahoo ticker request
     if key.startswith("Yahoo/"):
         ticker = key.split("/")[1]
+
+        # Ask user or config for date range
+        start_date = '1900-01-01'  # or input from config
+        end_date = datetime.today().strftime('%Y-%m-%d')
+
         # Download daily data from Yahoo
-        df = yf.download(ticker, progress=False)
+        df = yf.download(ticker, start=start_date, end=end_date, progress=False)
         if df.empty:
             raise ValueError(f"No data returned from Yahoo for ticker {ticker}")
         return df
-
-    # Otherwise, look up in DATA_SOURCES
-    if key not in DATA_SOURCES:
-        raise KeyError(f"Unknown data key: {key}")
+        # Otherwise, look up in DATA_SOURCES
+        if key not in DATA_SOURCES:
+            raise KeyError(f"Unknown data key: {key}")
 
     cfg = DATA_SOURCES[key]
     dtype = cfg["type"]
