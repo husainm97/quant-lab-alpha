@@ -4,6 +4,14 @@ import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import os
+import sys
+
+# Ensure local imports work
+script_dir = os.path.dirname(os.path.abspath(__file__))
+if script_dir not in sys.path:
+    sys.path.insert(0, script_dir)
+from portfolio_module import Portfolio
 
 def markowitz_frontier_random(returns: pd.DataFrame, risk_free: float = 0.02, n_portfolios: int = 10000):
     """
@@ -40,7 +48,9 @@ def markowitz_frontier_random(returns: pd.DataFrame, risk_free: float = 0.02, n_
     }
 
 
-def plot_markowitz_gui(root, returns: pd.DataFrame, portfolio_obj, risk_free: float = 0.02):
+def plot_markowitz_gui(root, portfolio_obj: Portfolio, risk_free: float = 0.02):
+
+    returns = portfolio_obj.get_common_monthly_returns()
     data = markowitz_frontier_random(returns, risk_free)
 
     rf_annual = 0.02

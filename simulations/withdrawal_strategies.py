@@ -1,36 +1,23 @@
 # withdrawal_strategies.py
 from typing import Callable
 
-def pct_of_initial_capital(initial_capital: float, rate: float, min_withdrawal: float = 0, max_withdrawal: float = float("inf")) -> Callable[[float], float]:
-    """Withdraw a fixed % of initial capital, with optional guardrails."""
-    def strategy(current_capital: float) -> float:
-        w = initial_capital * rate
-        return max(min(w, max_withdrawal), min_withdrawal)
-    return strategy
-
-def pct_of_current_capital(rate: float, min_withdrawal: float = 0, max_withdrawal: float = float("inf")) -> Callable[[float], float]:
+def pct_of_current_capital(rate: float, scale: float = 1, min_withdrawal: float = 0, max_withdrawal: float = float("inf")) -> Callable[[float], float]:
     """Withdraw a fixed % of current capital, with optional guardrails."""
     def strategy(current_capital: float) -> float:
         w = current_capital * rate
-        return max(min(w, max_withdrawal), min_withdrawal)
+        return max(min(w, max_withdrawal), min_withdrawal) / scale 
     return strategy
 
-def fixed_amount(amount: float) -> Callable[[float], float]:
-    """Withdraw a fixed nominal amount per year."""
-    def strategy(current_capital: float) -> float:
-        return min(current_capital, amount)
-    return strategy
-
-def fixed_pct_initial(initial_capital: float, rate: float = 0.04):
+def fixed_pct_initial(initial_capital: float, rate: float = 0.04, scale: float = 1):
     """
     Fixed percentage of initial capital (e.g., 4% rule)
     """
     def withdraw(current_wealth: float) -> float:
-        return initial_capital * rate
+        return initial_capital * rate / scale 
     return withdraw
 
 
-def guardrail_pct(min_rate: float = 0.025, max_rate: float = 0.05, benchmark_growth: float = 1.0):
+def guardrail_pct(min_rate: float = 0.025, max_rate: float = 0.05, scale: float = 1):
     """
     Guardrail strategy: withdraw % within min/max depending on portfolio performance
     - If portfolio above benchmark_growth, withdraw max_rate
@@ -49,31 +36,40 @@ def guardrail_pct(min_rate: float = 0.025, max_rate: float = 0.05, benchmark_gro
             rate = min_rate + (ratio - 0.8)/(1.0-0.8) * (max_rate - min_rate)
 
          
-        return current_wealth * rate
+        return current_wealth * rate / scale 
     return withdraw
 
-def bucket_strategy(cash_years: int = 3, annual_withdrawal: float = 50_000):
+def bucket_strategy(
+    cash_years: int = 3,
+    annual_withdrawal: float = 50_000,
+    scale: float = 1,
+):
     """
-    Bucket strategy: keeps a short-term cash reserve for withdrawals
-    - cash_years: number of years of withdrawals to hold in cash
-    - annual_withdrawal: target annual withdrawal amount
+    Bucket strategy with consistent monthly units.
+
+    - cash_years: years of withdrawals to hold in cash
+    - annual_withdrawal: annual target withdrawal
+    - scale: scale per withdrawal period (12 = monthly, 1 = annual)
     """
-    cash_buffer = annual_withdrawal * cash_years
-    leftover = 0.0  # tracks how much extra cash is in buffer
+
+    monthly_withdrawal = annual_withdrawal / scale
+    target_buffer = monthly_withdrawal * scale * cash_years
+    cash_buffer = target_buffer
 
     def withdraw(current_wealth: float) -> float:
-        nonlocal cash_buffer, leftover
+        nonlocal cash_buffer
 
-        # If portfolio is low, withdraw as much as possible but not more than current wealth
+        # If portfolio cannot sustain the buffer, liquidate
         if current_wealth < cash_buffer:
             amt = current_wealth
-            leftover = 0
-            cash_buffer = 0
+            cash_buffer = 0.0
         else:
-            amt = annual_withdrawal
-            leftover = current_wealth - cash_buffer
-            # refill the buffer up to target
-            cash_buffer = min(cash_buffer + leftover, annual_withdrawal * cash_years)
+            amt = monthly_withdrawal
+
+            # Refill buffer if possible
+            surplus = current_wealth - cash_buffer
+            refill = min(surplus, target_buffer - cash_buffer)
+            cash_buffer += refill
 
         return amt
 

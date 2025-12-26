@@ -24,7 +24,7 @@ def fetch(key: str):
         end_date = datetime.today().strftime('%Y-%m-%d')
 
         # Download daily data from Yahoo
-        df = yf.download(ticker, start=start_date, end=end_date, progress=False)
+        df = yf.download(ticker, start=start_date, end=end_date, auto_adjust=True, progress=False)
         if df.empty:
             raise ValueError(f"No data returned from Yahoo for ticker {ticker}")
         return df

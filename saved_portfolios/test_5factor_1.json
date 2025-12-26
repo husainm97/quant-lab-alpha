@@ -1,0 +1,41 @@
+{
+    "leverage": 1.0,
+    "interest_rate": 0.0,
+    "assets": [
+        {
+            "Source": "Yahoo",
+            "Ticker": "SPY",
+            "Allocation": 30.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "ZPRX.DE",
+            "Allocation": 8.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "ZPRV.DE",
+            "Allocation": 12.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "IEUR",
+            "Allocation": 10.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "EEM",
+            "Allocation": 10.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "VEU",
+            "Allocation": 15.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "VLUE",
+            "Allocation": 15.0
+        }
+    ]
+}
