@@ -10,6 +10,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from simulations.portfolio_module import Portfolio
 from data.fetcher import fetch
+import json
+from tkinter import filedialog
 
 
 class PortfolioGUI:
@@ -32,7 +34,7 @@ class PortfolioGUI:
     def _build_ui(self):
         self._build_portfolio_section()
         self._build_leverage_section()
-        self._build_strategy_section()
+        #self._build_strategy_section()
         self._build_action_section()
 
     # =============================
@@ -58,7 +60,16 @@ class PortfolioGUI:
 
         self.add_button = ttk.Button(frame, text="Add", command=self.add_asset)
         self.add_button.grid(row=0, column=6, padx=10, pady=5)
-        ttk.Button(frame, text="Reset", command=self.reset_portfolio).grid(row=0, column=7, padx=10, pady=5)
+        self.delete_button = ttk.Button(frame, text="Delete", command=self.delete_asset)
+        self.delete_button.grid(row=0, column=7, padx=10, pady=5)
+
+        # --- Save/Load Portfolio ---
+        file_frame = ttk.Frame(frame)
+        file_frame.grid(row=3, column=0, columnspan=9, pady=5)
+
+        ttk.Button(file_frame, text="Reset", command=self.reset_portfolio).pack(side="left", padx=5)
+        ttk.Button(file_frame, text="Import JSON", command=self.import_portfolio).pack(side="left", padx=5)
+        ttk.Button(file_frame, text="Save Portfolio", command=self.save_portfolio).pack(side="left", padx=5)
 
         # Treeview for portfolio display
         columns = ("Source", "Ticker", "Allocation")
@@ -111,13 +122,40 @@ class PortfolioGUI:
         self.tree.insert("", "end", values=(source, ticker, f"{allocation:.1f}%"))
         self._update_total_allocation()
 
+    def delete_asset(self):
+        # Get the selected item from the Treeview
+        selected_items = self.tree.selection()
+        
+        if not selected_items:
+            messagebox.showwarning("Delete Error", "Please select an asset from the list to delete.")
+            return
+
+        for item in selected_items:
+            # Identify the ticker from the selected row
+            values = self.tree.item(item, "values")
+            ticker_to_remove = values[1]
+
+            # Remove from internal portfolio list
+            self.portfolio = [p for p in self.portfolio if p["Ticker"] != ticker_to_remove]
+
+            # Remove from your portfolio object (if it supports removal)
+            # If your portfolio_obj doesn't have a remove method, you may need to 
+            # rebuild it or add a remove_asset method to its class.
+            if hasattr(self.portfolio_obj, 'remove_asset'):
+                self.portfolio_obj.remove_asset(ticker_to_remove)
+            # Remove from the Treeview UI
+            self.tree.delete(item)
+
+        # Update the total allocation label
+        self._update_total_allocation()
+        messagebox.showinfo("Deleted", f"Removed {len(selected_items)} asset(s) from portfolio.")
+
     def reset_portfolio(self):
         self.portfolio.clear()
         for row in self.tree.get_children():
             self.tree.delete(row)
         self._update_total_allocation()
         self.portfolio_obj.reset()
-        messagebox.showinfo("Portfolio Reset", "Portfolio cleared successfully.")
 
     def _update_total_allocation(self):
         total = sum(item["Allocation"] for item in self.portfolio)
@@ -126,6 +164,63 @@ class PortfolioGUI:
             foreground=("red" if total > 100 else "green"),
         )
         self.add_button.config(state=("disabled" if total >= 100 else "normal"))
+
+    def save_portfolio(self):
+        # Prepare the data dictionary
+        data = {
+            "leverage": self.leverage_var.get(), # Assuming you have these variables
+            "interest_rate": self.interest_var.get(),
+            "assets": [
+                {
+                    "Source": item["Source"],
+                    "Ticker": item["Ticker"],
+                    "Allocation": item["Allocation"]
+                } 
+                for item in self.portfolio
+            ]
+        }
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+        
+        if file_path:
+            with open(file_path, 'w') as f:
+                json.dump(data, f, indent=4)
+            messagebox.showinfo("Success", "Portfolio saved successfully!")
+
+    def import_portfolio(self):
+        file_path = filedialog.askopenfilename(
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+        
+        if not file_path:
+            return
+
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+
+            # 1. Clear current portfolio
+            self.reset_portfolio()
+
+            # 2. Set global parameters
+            self.leverage_var.set(data.get("leverage", 1.0))
+            self.interest_var.set(data.get("interest_rate", 0.0))
+
+            # 3. Batch Add Assets
+            for asset in data.get("assets", []):
+                # We set the UI variables so we can reuse your existing add_asset logic
+                self.source_var.set(asset["Source"])
+                self.ticker_var.set(asset["Ticker"])
+                self.allocation_var.set(asset["Allocation"])
+                self.add_asset() # Reusing your existing validation and fetch logic
+
+            messagebox.showinfo("Import Success", "Portfolio loaded and data fetched.")
+            
+        except Exception as e:
+            messagebox.showerror("Import Error", f"Failed to load file:\n{e}")
 
     # =============================
     # Leverage & Interest Section
@@ -176,7 +271,7 @@ class PortfolioGUI:
         return lev, rate
 
 
-
+    '''
     # =============================
     # Strategy Section
     # =============================
@@ -228,6 +323,8 @@ class PortfolioGUI:
             self.guardrails_var = tk.DoubleVar()
             ttk.Entry(self.param_frame, textvariable=self.guardrails_var, width=10).grid(row=0, column=3, padx=5)
 
+    
+
     # =============================
     # Strategy Expansion Placeholder
     # =============================
@@ -242,6 +339,7 @@ class PortfolioGUI:
         ttk.Label(win, text="• Covered Calls\n• Protective Puts\n• Option Spreads\n• Dynamic Hedging\n• Custom Rules", justify="left").pack(pady=5)
 
         ttk.Button(win, text="Close", command=win.destroy).pack(pady=15)
+    '''
 
     # =============================
     # Action Section
@@ -257,23 +355,26 @@ class PortfolioGUI:
     # =============================
     # Placeholder Action Functions
     # =============================
+
     def analyse_portfolio(self):
-        summary = self.portfolio_obj.summary()
-        msg = (
-            f"Name: {summary['Name']}\n"
-            f"Total Allocation: {summary['Total Allocation']:.2f}\n"
-            f"Leverage: {summary['Leverage']:.2f}\n"
-            f"Interest Rate: {summary['Interest Rate']:.4f}\n"
-            f"Assets:\n"
-        )
-        for ticker, w in summary["Constituents"].items():
-            msg += f"  {ticker}: {w*100:.1f}%\n"
-        messagebox.showinfo("Portfolio Summary", msg)
+        # Do not use until currency conversion is implemented!!!
+        try:
+            from src.five_factor_model import run_ff5_analysis
+
+            if not self.portfolio_obj.constituents:
+                messagebox.showwarning("No Assets", "Add assets to the portfolio before running Monte Carlo.")
+                return
+
+            lev, rate = self.get_portfolio_leverage_settings()
+            self.portfolio_obj.apply_leverage(lev, rate)
+            run_ff5_analysis(self.root, self.portfolio_obj)
+        except Exception as e:
+            messagebox.showerror("Error", f"Regression failed:\n{e}")
+
 
     def run_monte_carlo(self):
         try:
             from simulations.bootstrap import run_simulation
-
             if not self.portfolio_obj.constituents:
                 messagebox.showwarning("No Assets", "Add assets to the portfolio before running Monte Carlo.")
                 return
@@ -293,12 +394,20 @@ class PortfolioGUI:
                     f"  Chance to reach target: {res['prob_target']:.1f}%\n"
                 )
                 summary.append(line)
-
+            
             messagebox.showinfo("Bootstrap Simulation Complete", "\n\n".join(summary))
             fig.show()
 
+        #except Exception as e:
+        #    messagebox.showerror("Error", f"Monte Carlo failed:\n{e}")
+
+        # ... inside your function ...
         except Exception as e:
-            messagebox.showerror("Error", f"Monte Carlo failed:\n{e}")
+            import traceback
+            # This captures the full multi-line error log
+            full_error = traceback.format_exc()
+            print(full_error) # Prints to your terminal/console
+            messagebox.showerror("Detailed Error", f"Monte Carlo failed:\n\n{full_error}")
 
     def run_markowitz(self):
         try:
@@ -307,16 +416,12 @@ class PortfolioGUI:
             if not hasattr(self, "portfolio_obj") or not self.portfolio_obj.constituents:
                 raise ValueError("Portfolio has no assets. Add assets first.")
 
-            returns_df = self.portfolio_obj.get_common_monthly_returns()
-
             top = tk.Toplevel(self.root)
             top.title("Markowitz Efficient Frontier")
-            plot_markowitz_gui(top, returns_df, self.portfolio_obj, risk_free=0.02)
+            plot_markowitz_gui(top, self.portfolio_obj, risk_free=0.02)
 
         except Exception as e:
             messagebox.showerror("Error", f"Markowitz optimisation failed:\n{e}")
-
-
 
 if __name__ == "__main__":
     root = tk.Tk()
