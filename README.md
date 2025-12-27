@@ -77,26 +77,30 @@ These have been used solely to benchmark and validate analysis code within the J
 
 ---
 
-## Realism Update™ (In Development)
-
-Features that materially increase realism but are intentionally separated to keep the core engine clean and interpretable:
-
-- **Portfolio rebalancing**
-- **Inflation-adjusted withdrawals**
-- Real (not just nominal) return tracking  
-- Stress testing with ±1% return and +20% volatility shocks  
-
-These features are planned as **opt-in layers**, not hardwired assumptions.
-
----
-
 ## Assumptions and Limitations
 
-- Portfolio weights are currently assumed constant; drift and rebalancing are planned in a future update  
+As a toolkit built to study financial theory, a number of regional and broker-dependent real world effects are excluded for simplicity. This alters the outcome from what may be realistically achievable. Differences may be accounted for externally when choosing inputs. The following limitations must be kept in mind:  
+
+- Portfolio weights are currently assumed to remain constant; drift and rebalancing are planned in a future update
+- Leverage multipliers assumed to be constant, this is only to show the theoretical effect of leverage, realistically hard borrowing limits, maximum permitted loan-to-value ratios and margin calls significantly limit the scope of this strategy.  
 - Assets with short histories are extended using synthetic returns generated from FF5 regressions  
 - Taxes are **not** modeled; withdrawals currently represent spending *plus* taxes  
 - The Markowitz optimizer runs on a limited random sample; direct solvers (e.g. `pypfopt`) would yield more robust solutions  
 - Primary market data is sourced from Yahoo Finance; additional data providers are planned  
+
+---
+
+## Realism Update™ (In Development)
+
+Features that materially increase realism but are currently separated to keep the core engine clean and interpretable:
+
+- **Portfolio rebalancing**
+- **Inflation-adjusted withdrawals**
+- Limited leverage model imposing hard loan amount cap, loan-to-value ratio and margin calls
+- Real (not just nominal) return tracking  
+- Stress testing with ±1% return and +20% volatility shocks  
+
+These features are planned as **opt-in layers**, not hardwired assumptions.
 
 ---
 
