@@ -9,18 +9,23 @@
         },
         {
             "Source": "Yahoo",
-            "Ticker": "IEUR",
-            "Allocation": 30.0
+            "Ticker": "VEU",
+            "Allocation": 20.0
         },
         {
             "Source": "Yahoo",
             "Ticker": "ZPRV.DE",
-            "Allocation": 30.0
+            "Allocation": 10.0
         },
         {
             "Source": "Yahoo",
-            "Ticker": "ZPRX.DE",
+            "Ticker": "BTC-USD",
             "Allocation": 10.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "GOVT",
+            "Allocation": 30.0
         }
     ]
 }

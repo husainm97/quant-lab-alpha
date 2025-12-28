@@ -18,7 +18,7 @@ class PortfolioGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Portfolio Builder")
-        self.root.geometry("1200x800")
+        self.root.geometry("720x550")
 
         self.portfolio = []
         self.strategy_params = {}
@@ -41,7 +41,7 @@ class PortfolioGUI:
     # Portfolio Section
     # =============================
     def _build_portfolio_section(self):
-        frame = ttk.LabelFrame(self.root, text="Build Your Portfolio", padding=10)
+        frame = ttk.LabelFrame(self.root, text="Select Assets", padding=10)
         frame.pack(fill="x", padx=10, pady=10)
 
         ttk.Label(frame, text="Source:").grid(row=0, column=0, padx=5, pady=5)
@@ -52,11 +52,11 @@ class PortfolioGUI:
 
         ttk.Label(frame, text="Ticker:").grid(row=0, column=2, padx=5, pady=5)
         self.ticker_var = tk.StringVar()
-        ttk.Entry(frame, textvariable=self.ticker_var, width=15).grid(row=0, column=3, padx=5, pady=5)
+        ttk.Entry(frame, textvariable=self.ticker_var, width=12).grid(row=0, column=3, padx=5, pady=5)
 
         ttk.Label(frame, text="Allocation (%):").grid(row=0, column=4, padx=5, pady=5)
         self.allocation_var = tk.DoubleVar(value=0.0)
-        ttk.Entry(frame, textvariable=self.allocation_var, width=10).grid(row=0, column=5, padx=5, pady=5)
+        ttk.Entry(frame, textvariable=self.allocation_var, width=6).grid(row=0, column=5, padx=5, pady=5)
 
         self.add_button = ttk.Button(frame, text="Add", command=self.add_asset)
         self.add_button.grid(row=0, column=6, padx=10, pady=5)
@@ -76,7 +76,7 @@ class PortfolioGUI:
         self.tree = ttk.Treeview(frame, columns=columns, show="headings", height=8)
         for col in columns:
             self.tree.heading(col, text=col)
-            self.tree.column(col, width=120)
+            self.tree.column(col, width=180)
         self.tree.grid(row=1, column=0, columnspan=8, pady=10)
 
         # Allocation display
@@ -348,14 +348,16 @@ class PortfolioGUI:
         frame = ttk.LabelFrame(self.root, text="Actions", padding=10)
         frame.pack(fill="x", padx=10, pady=10)
 
-        ttk.Button(frame, text="Analyse", command=self.analyse_portfolio).grid(row=0, column=0, padx=10)
-        ttk.Button(frame, text="Run Monte Carlo", command=self.run_monte_carlo).grid(row=0, column=1, padx=10)
-        ttk.Button(frame, text="Markowitz", command=self.run_markowitz).grid(row=0, column=2, padx=10)
+        ttk.Button(frame, text="Factor Regression", command=self.analyse_portfolio).grid(row=0, column=0, padx=10)
+        ttk.Button(frame, text="Markowitz Optimiser", command=self.run_markowitz).grid(row=0, column=1, padx=10)
+        ttk.Button(frame, text="Correlation Matrix", command=self.run_correlations).grid(row=0, column=2, padx=10)
+        ttk.Button(frame, text="Risk Report", command=self.run_risk_report).grid(row=0, column=3, padx=10)
+        ttk.Button(frame, text="Run Monte Carlo", command=self.run_monte_carlo).grid(row=0, column=4, padx=10)
+        
 
     # =============================
     # Placeholder Action Functions
     # =============================
-
     def analyse_portfolio(self):
         # Do not use until currency conversion is implemented!!!
         try:
@@ -370,6 +372,52 @@ class PortfolioGUI:
             run_ff5_analysis(self.root, self.portfolio_obj)
         except Exception as e:
             messagebox.showerror("Error", f"Regression failed:\n{e}")
+
+    
+    def run_markowitz(self):
+        try:
+            from simulations.markowitz import plot_markowitz_gui
+
+            if not hasattr(self, "portfolio_obj") or not self.portfolio_obj.constituents:
+                raise ValueError("Portfolio has no assets. Add assets first.")
+
+            top = tk.Toplevel(self.root)
+            top.title("Markowitz Efficient Frontier")
+            plot_markowitz_gui(top, self.portfolio_obj, risk_free=0.02, gui=self)
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Markowitz optimisation failed:\n{e}")
+
+    def run_correlations(self):
+        try:
+            from src.correlation import plot_correlation_heatmap
+
+            if not hasattr(self, "portfolio_obj") or not self.portfolio_obj.constituents:
+                raise ValueError("Portfolio has no assets.")
+
+            top = tk.Toplevel(self.root)
+            top.title("Asset Correlation Matrix")
+
+            plot_correlation_heatmap(top, self.portfolio_obj)
+
+        except Exception as e:
+            import traceback
+            full_error = traceback.format_exc()
+            print(full_error)
+            messagebox.showerror("Correlation Error", full_error)
+
+
+    def run_risk_report(self):
+        try:
+            from src.risk import plot_risk_dashboard
+            if not hasattr(self, "portfolio_obj") or not self.portfolio_obj.constituents:
+                raise ValueError("Portfolio has no assets.")
+
+            top = tk.Toplevel(self.root)
+            top.title("Portfolio Risk Analytics")
+            plot_risk_dashboard(top, self.portfolio_obj)
+        except Exception as e:
+            messagebox.showerror("Error", f"Risk assessment failed:\n{e}")
 
 
     def run_monte_carlo(self):
@@ -408,20 +456,6 @@ class PortfolioGUI:
             full_error = traceback.format_exc()
             print(full_error) # Prints to your terminal/console
             messagebox.showerror("Detailed Error", f"Monte Carlo failed:\n\n{full_error}")
-
-    def run_markowitz(self):
-        try:
-            from simulations.markowitz import plot_markowitz_gui
-
-            if not hasattr(self, "portfolio_obj") or not self.portfolio_obj.constituents:
-                raise ValueError("Portfolio has no assets. Add assets first.")
-
-            top = tk.Toplevel(self.root)
-            top.title("Markowitz Efficient Frontier")
-            plot_markowitz_gui(top, self.portfolio_obj, risk_free=0.02)
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Markowitz optimisation failed:\n{e}")
 
 if __name__ == "__main__":
     root = tk.Tk()
