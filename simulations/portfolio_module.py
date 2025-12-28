@@ -73,7 +73,7 @@ class Portfolio:
                 # restore datetime index
                 merged['Date'] = pd.to_datetime(merged['Date'])
                 price = merged.set_index('Date')[ticker]
-                print(f"Warning: Currency of {ticker} was converted from {currency} to USD.")
+                #print(f"Warning: Currency of {ticker} was converted from {currency} to USD.")
 
             monthly_returns = self._price_to_monthly_returns(price)
             self.data[ticker] = {

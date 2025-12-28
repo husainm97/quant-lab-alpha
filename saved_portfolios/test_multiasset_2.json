@@ -1,0 +1,41 @@
+{
+    "leverage": 1.0,
+    "interest_rate": 0.0,
+    "assets": [
+        {
+            "Source": "Yahoo",
+            "Ticker": "VEU",
+            "Allocation": 16.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "GOVT",
+            "Allocation": 7.5
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "SXR8.DE",
+            "Allocation": 15.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "ZPRX.DE",
+            "Allocation": 22.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "ZPRV.DE",
+            "Allocation": 22.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "ARKK",
+            "Allocation": 7.5
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "BTC-USD",
+            "Allocation": 10.0
+        }
+    ]
+}

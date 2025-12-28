@@ -6,10 +6,10 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
-import portfolio_module as portfolio_module
+from portfolio_module import Portfolio
 
 '''
-This class is a possible future update of an investor as an 'agent' who performs actions on the portfolio to run the bootstrap sims with different "personalised" strategies.  
+This class is a possible future update with an investor as an 'agent' who performs actions on the portfolio to run the bootstrap sims with different "personalised" strategies.  
 '''
 
 class Investor:
@@ -18,7 +18,7 @@ class Investor:
         self.capital = capital
         self.income = income
         self.risk_tolerance = risk_tolerance
-        self.portfolio = portfolio.Portfolio(name=f"{name}'s Portfolio")
+        self.portfolio = Portfolio(name=f"{name}'s Portfolio")
         self.withdrawal_strategy = withdrawal_strategy  # callable(current_capital) -> float
 
     def annual_update(self):

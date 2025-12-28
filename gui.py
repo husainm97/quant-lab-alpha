@@ -427,27 +427,11 @@ class PortfolioGUI:
                 messagebox.showwarning("No Assets", "Add assets to the portfolio before running Monte Carlo.")
                 return
 
+            top = tk.Toplevel(self.root)
+            top.title("Block Bootstrap Simulation")
             lev, rate = self.get_portfolio_leverage_settings()
             self.portfolio_obj.apply_leverage(lev, rate)
-            results, fig = run_simulation(portfolio_obj=self.portfolio_obj)
-
-
-            # display results (same as before)
-            summary = []
-            for strat, res in results.items():
-                line = (
-                    f"{strat}:\n"
-                    f"  Fail rate: {res['fail_rate']:.1f}%\n"
-                    f"  Median final wealth: ${res['p50']:,.0f}\n"
-                    f"  Chance to reach target: {res['prob_target']:.1f}%\n"
-                )
-                summary.append(line)
-            
-            messagebox.showinfo("Bootstrap Simulation Complete", "\n\n".join(summary))
-            fig.show()
-
-        #except Exception as e:
-        #    messagebox.showerror("Error", f"Monte Carlo failed:\n{e}")
+            run_simulation(top, portfolio_obj=self.portfolio_obj)
 
         # ... inside your function ...
         except Exception as e:

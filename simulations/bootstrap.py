@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 import matplotlib.ticker as mtick
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Ensure local imports work
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -32,24 +33,27 @@ import matplotlib.ticker as mtick
 import statsmodels.api as sm
 from data.fetch_ff5 import fetch_ff5_monthly
 
-def run_simulation(portfolio_obj: Portfolio = None, returns_df: pd.DataFrame = None, config: dict = None):
+def run_simulation(root, portfolio_obj=None, returns_df=None, config=None):
     """
-    Run a block-bootstrap Monte Carlo simulation using monthly returns,
-    extending short histories with Fama-French 5-factor fits.
+    Dashboard version: Math runs once, sliders update the view.
+    Stats (P16/50/84) are in the Sidebar Card. Legend is on the Plot.
     """
-    if config is None:
-        config = {}
+    import tkinter as tk
+    from tkinter import ttk
+    import matplotlib.ticker as mtick
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+    if config is None: config = {}
+
+    # --- 1. SETTINGS & MATH (ORIGINAL LOGIC) ---
     MONTHS_PER_YEAR = 12
-    WITHDRAWAL_EVERY = 1
-    SEED = config.get("SEED", 42)
-    N_BOOTSTRAP = config.get("N_BOOTSTRAP", 10000)
+    N_BOOTSTRAP = config.get("N_BOOTSTRAP", 2000) 
     AVG_BLOCK_SIZE = config.get("BLOCK_SIZE", 60)
     START_CAPITAL = config.get("START_CAPITAL", 1_000_000)
-    TARGET_WEALTH = config.get("TARGET_WEALTH", 2_000_000)
+    TARGET_WEALTH = config.get("TARGET_WEALTH", 2_700_000)
     TARGET_YEARS = config.get("TARGET_YEARS", 50)
-
-    rng = np.random.default_rng()
+    N_MONTHS = TARGET_YEARS * MONTHS_PER_YEAR
+    rng = np.random.default_rng(config.get("SEED", 42))
 
     if portfolio_obj is not None:
         returns_df = portfolio_obj.get_common_monthly_returns()
@@ -57,31 +61,21 @@ def run_simulation(portfolio_obj: Portfolio = None, returns_df: pd.DataFrame = N
     else:
         raise ValueError("Provide a Portfolio object.")
 
+    # --- FAMA-FRENCH EXTENSION (FIXED NameError) ---
     ff_factors = fetch_ff5_monthly()
     ff_factors.index = pd.to_datetime(ff_factors.index).to_period('M').to_timestamp('M')
     factor_cols = ['Mkt-RF', 'SMB', 'HML', 'RMW', 'CMA']
-
     combined = pd.concat([returns_df, ff_factors], axis=1, join='inner')
 
-    synthetic_note_added = False
-    N_SYNTH = TARGET_YEARS * MONTHS_PER_YEAR
-    
-    # --- PRESERVE CORRELATION: SYNCHRONIZED RESIDUAL SAMPLING ---
-    # 1. Calculate all residuals first
-    all_resids_dict = {}
-    for etf in tickers:
-        y = combined[etf] - combined['RF']
-        X = sm.add_constant(combined[factor_cols])
-        model = sm.OLS(y, X).fit()
-        all_resids_dict[etf] = y - model.predict(X)
+    all_resids_dict = {t: (combined[t] - combined['RF']) - 
+                      sm.OLS(combined[t] - combined['RF'], 
+                             sm.add_constant(combined[factor_cols])).fit().predict(sm.add_constant(combined[factor_cols]))
+                      for t in tickers}
     
     all_resids_df = pd.DataFrame(all_resids_dict)
-    n_existing = len(combined)
-    n_needed = max(0, N_SYNTH - n_existing)
+    n_existing, n_needed = len(combined), max(0, N_MONTHS - len(combined))
     
     if n_needed > 0:
-        synthetic_note_added = True
-        # Draw synchronized indices for all assets
         sync_indices = []
         while len(sync_indices) < n_needed:
             block_len = rng.geometric(1 / AVG_BLOCK_SIZE)
@@ -90,148 +84,140 @@ def run_simulation(portfolio_obj: Portfolio = None, returns_df: pd.DataFrame = N
             sync_indices.extend(range(start, end))
         
         sync_indices = sync_indices[:n_needed]
-        synthetic_resids_matrix = all_resids_df.iloc[sync_indices].values
-        
-        synthetic_index = pd.date_range(
-            end=combined.index[-1] + pd.DateOffset(months=n_needed),
-            periods=n_needed, freq='ME'
-        )
-        
-        # Reconstruct extended returns
-        extended_returns = []
-        for i, etf in enumerate(tickers):
-            hist_y = combined[etf].values
-            # Re-add RF (using last known RF for synthetic portion)
-            synth_y = synthetic_resids_matrix[:, i] + combined['RF'].iloc[-1]
-            extended_series = pd.Series(np.concatenate([hist_y, synth_y]))
-            extended_returns.append(extended_series)
+        synth_resids = all_resids_df.iloc[sync_indices].values
+        ext_rets = {t: np.concatenate([combined[t].values, synth_resids[:, i] + combined['RF'].iloc[-1]]) 
+                    for i, t in enumerate(tickers)}
+        returns_extended_df = pd.DataFrame(ext_rets)
     else:
-        extended_returns = [combined[etf] for etf in tickers]
+        returns_extended_df = combined[tickers]
 
-    returns_extended_df = pd.DataFrame({t: s.values for t, s in zip(tickers, extended_returns)})
-    returns_extended_df.index = pd.date_range(start=combined.index[0],
-                                              periods=len(returns_extended_df), freq='ME')
-
-    N_ASSETS = len(tickers)
-    N_MONTHS = returns_extended_df.shape[0]
-    returns_matrix = returns_extended_df.values
-
+    # --- PRE-COMPUTE BOOTSTRAP ---
+    returns_matrix = returns_extended_df.values 
     weights = np.array([portfolio_obj.constituents[t] for t in tickers])
     leverage = portfolio_obj.leverage
-    interest_rate = portfolio_obj.interest_rate
-    monthly_interest = interest_rate * (leverage - 1) / MONTHS_PER_YEAR
+    monthly_interest = portfolio_obj.interest_rate * (leverage - 1) / MONTHS_PER_YEAR
 
-    def block_bootstrap_multiasset(returns_matrix, avg_block_size, n_samples):
-        N_months, N_assets = returns_matrix.shape
-        result = []
-        while len(result) < n_samples:
-            start = rng.integers(0, N_months)
-            block_len = rng.geometric(1 / avg_block_size)
-            end = min(start + block_len, N_months)
-            block = returns_matrix[start:end, :]
-            result.append(block)
-        return np.vstack(result)[:n_samples, :]
-
-    all_paths = np.zeros((N_BOOTSTRAP, N_MONTHS, N_ASSETS))
+    all_paths = np.zeros((N_BOOTSTRAP, N_MONTHS, len(tickers)))
     for b in range(N_BOOTSTRAP):
-        all_paths[b] = block_bootstrap_multiasset(returns_matrix, AVG_BLOCK_SIZE, N_MONTHS)
+        res = []
+        while len(res) < N_MONTHS:
+            start = rng.integers(0, len(returns_matrix))
+            block_len = rng.geometric(1 / AVG_BLOCK_SIZE)
+            end = min(start + block_len, len(returns_matrix))
+            res.append(returns_matrix[start:end, :])
+        all_paths[b] = np.vstack(res)[:N_MONTHS, :]
 
-    port_returns = (all_paths @ weights) * leverage - monthly_interest
+    # --- 2. GUI LAYOUT ---
+    for child in root.winfo_children(): child.destroy()
+    
+    main_frame = ttk.Frame(root)
+    main_frame.pack(fill="both", expand=True)
 
-    scale = MONTHS_PER_YEAR / WITHDRAWAL_EVERY
-    strategies = {
-        "Fixed 4%": fixed_pct_initial(START_CAPITAL, 0.04, scale=scale),
-        "Variable 4%": pct_of_current_capital(0.04, scale=scale),
-        "Guardrail 2.5-5%": guardrail_pct(0.025, 0.05, scale=scale),
-        "Bucket Strategy": bucket_strategy(cash_years=3, annual_withdrawal=50_000, scale=scale)
-    }
+    sidebar = ttk.LabelFrame(main_frame, text="Simulation Controls", padding=10)
+    sidebar.pack(side="left", fill="y", padx=5, pady=5)
 
-    all_results = {}
-    xs = np.arange(N_MONTHS + 1) / 12
+    strat_var = tk.StringVar(value="Fixed 4%")
+    ret_shift_var = tk.DoubleVar(value=0.0)
+    vol_mult_var = tk.DoubleVar(value=1.0)
 
-    for name, strategy in strategies.items():
+    ttk.Label(sidebar, text="Withdrawal Strategy:").pack(anchor="w")
+    strat_menu = ttk.Combobox(sidebar, textvariable=strat_var, state="readonly", 
+                             values=["Fixed 4%", "Variable 4%", "Guardrail 2.5-5%", "Bucket Strategy"])
+    strat_menu.pack(fill="x", pady=5)
+
+    ttk.Label(sidebar, text="Stress: Return Shift (%)").pack(anchor="w", pady=(10,0))
+    ret_s = tk.Scale(sidebar, from_=-5.0, to=5.0, variable=ret_shift_var, orient="horizontal", resolution=0.1)
+    ret_s.pack(fill="x")
+
+    ttk.Label(sidebar, text="Stress: Volatility Multiplier").pack(anchor="w", pady=(10,0))
+    vol_s = tk.Scale(sidebar, from_=0.5, to=2.0, variable=vol_mult_var, orient="horizontal", resolution=0.1)
+    vol_s.pack(fill="x")
+
+    # --- THE SUMMARY CARD (Sidebar Section) ---
+    stats_card = ttk.Label(sidebar, text="", font=("Courier", 10), justify="left", 
+                           relief="sunken", padding=10, background="wheat")
+    stats_card.pack(fill="x", pady=20)
+
+    # Plot area
+    fig, ax = plt.subplots(figsize=(10, 6))
+    canvas = FigureCanvasTkAgg(fig, master=main_frame)
+    canvas.get_tk_widget().pack(side="right", fill="both", expand=True)
+
+    def update_plot(*args):
+        ax.clear()
+        
+        # Apply Stress
+        r_shift = ret_shift_var.get() / 1200 # Annual to Monthly decimal
+        v_mult = vol_mult_var.get()
+        means = all_paths.mean(axis=1, keepdims=True)
+        stressed_paths = (all_paths - means) * v_mult + means + r_shift
+        
+        # Portfolio Returns & Strategy
+        port_rets = (stressed_paths @ weights) * leverage - monthly_interest
+        strategy = {
+            "Fixed 4%": fixed_pct_initial(START_CAPITAL, 0.04, scale=12),
+            "Variable 4%": pct_of_current_capital(0.04, scale=12),
+            "Guardrail 2.5-5%": guardrail_pct(0.025, 0.05, scale=12),
+            "Bucket Strategy": bucket_strategy(cash_years=3, annual_withdrawal=50000, scale=12)
+        }[strat_var.get()]
+
         wealth_paths = np.zeros((N_BOOTSTRAP, N_MONTHS + 1))
         wealth_paths[:, 0] = START_CAPITAL
         for b in range(N_BOOTSTRAP):
             w = START_CAPITAL
             for t in range(N_MONTHS):
-                w *= 1 + port_returns[b, t]
-                if t % WITHDRAWAL_EVERY == 0 and t > 0:
-                    w -= strategy(w)
-                
-                # --- PATH TERMINATION ---
-                if w <= 0:
-                    wealth_paths[b, t + 1] = 0
-                    break
-                wealth_paths[b, t + 1] = w
+                w *= (1 + port_rets[b, t])
+                if t > 0: w -= strategy(w)
+                if w <= 0: break
+                wealth_paths[b, t+1] = w
 
-        final_wealth = wealth_paths[:, -1]
-        terminated = (wealth_paths <= 0).any(axis=1)
-
-        all_results[name] = {
-            "wealth_paths": wealth_paths,
-            "mean_path": wealth_paths.mean(axis=0),
-            "p5_path": np.percentile(wealth_paths, 5, axis=0),   # Requested Percentiles
-            "p95_path": np.percentile(wealth_paths, 95, axis=0),
-            "final_wealth": final_wealth,
-            "terminated": terminated,
-            "fail_rate": terminated.mean() * 100,
-            "p16": np.percentile(final_wealth, 16),
-            "p50": np.percentile(final_wealth, 50),
-            "p84": np.percentile(final_wealth, 84),
-            "prob_target": (final_wealth >= TARGET_WEALTH).mean() * 100
-        }
-
-    all_min = min(res["wealth_paths"].min() for res in all_results.values())
-    all_max = max(res["wealth_paths"].max() for res in all_results.values())
-
-    n_strats = len(strategies)
-    n_cols = 2
-    n_rows = int(np.ceil(n_strats / n_cols))
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(16, 12), sharex=True, sharey=True)
-    axes = axes.flatten()
-
-    note_text = "Note: Extra history was synthesised using a Fama-French 5 Factor Regression." \
-        if synthetic_note_added else ""
-
-    for ax, (name, res) in zip(axes, all_results.items()):
-        wp = res["wealth_paths"]
-
-        ax.fill_between(xs, -np.inf, 0, color='red', alpha=0.1)
-
-        # --- TERMINATED PATH PLOTTING ---
+        # Visualization
+        xs = np.arange(N_MONTHS + 1) / 12
+        
+        # Spaghetti lines
         for i in range(min(100, N_BOOTSTRAP)):
-            path = wp[i]
-            # Find index where path hits zero
-            zero_idx = np.where(path <= 0)[0]
-            if len(zero_idx) > 0:
-                ax.plot(xs[:zero_idx[0]+1], path[:zero_idx[0]+1], alpha=0.15)
-                ax.scatter(xs[zero_idx[0]], 0, color='red', marker='x', s=40, zorder=5)
+            path = wealth_paths[i]
+            z_idx = np.where(path <= 0)[0]
+            if len(z_idx) > 0:
+                ax.plot(xs[:z_idx[0]+1], path[:z_idx[0]+1], alpha=0.15, lw=0.7)
+                ax.scatter(xs[z_idx[0]], 0, color='red', marker='x', s=30)
             else:
-                ax.plot(xs, path, alpha=0.15)
+                ax.plot(xs, path, alpha=0.15, lw=0.7)
 
-        # Mean path and Percentile 5-95 bands
-        ax.plot(xs, res["mean_path"], color='grey', alpha=0.7, linewidth=2)
-        ax.fill_between(xs, res["p5_path"], res["p95_path"], color='grey', alpha=0.2)
+        # Bands & Median for Legend
+        p5_path, p95_path = np.percentile(wealth_paths, [5, 95], axis=0)
+        ax.plot(xs, np.median(wealth_paths, axis=0), color='grey', alpha=0.8, lw=2.5, label="Median Path")
+        ax.fill_between(xs, p5_path, p95_path, color='grey', alpha=0.15, label="5th - 95th Percentile")
+        
+        # Final Statistics for Summary Card
+        fail_rate = (wealth_paths[:, -1] <= 0).mean() * 100
+        p16, p50, p84 = np.percentile(wealth_paths[:, -1], [16, 50, 84])
+        prob_target = (wealth_paths[:, -1] >= TARGET_WEALTH).mean() * 100
 
-        txt = (
-            f"Fail rate: {res['fail_rate']:.1f}%\n"
-            f"P16 / P50 / P84: ${res['p16']:,.0f} / ${res['p50']:,.0f} / ${res['p84']:,.0f}\n"
-            f"Prob ≥ ${TARGET_WEALTH:,}: {res['prob_target']:.1f}%\n"
-            f"{note_text}"
+        summary_txt = (
+            f"--- RESULTS ---\n"
+            f"Fail Rate: {fail_rate:>5.1f}%\n"
+            f"P(Capital growth ≥ 2% p.a.): {prob_target:>4.1f}%\n\n"
+            f"--- FINAL WEALTH ---\n"
+            f"P16: ${p16/1e6:>5.2f}M\n"
+            f"P50: ${p50/1e6:>5.2f}M\n"
+            f"P84: ${p84/1e6:>5.2f}M"
         )
-        ax.annotate(txt, xy=(0.02, 0.95), xycoords='axes fraction', va='top', fontsize=10,
-                    bbox=dict(boxstyle='round,pad=0.3', alpha=0.5, facecolor='wheat'))
+        stats_card.config(text=summary_txt)
 
-        ax.set_title(name, fontsize=12)
+        # Plot Formatting
         ax.yaxis.set_major_formatter(mtick.StrMethodFormatter('${x:,.0f}'))
-        ax.set_ylim(bottom=-100000) # Slightly below zero to see the Xs
+        padding = max(START_CAPITAL, np.max(p95_path))*0.1
+        ax.set_ylim(np.min(p5_path)-padding, np.max(p95_path)+padding)
+        ax.set_title(f"Monte Carlo: {strat_var.get()}", loc='center', fontweight='bold')
+        ax.legend(loc="upper left")
         ax.grid(alpha=0.3)
+        canvas.draw()
 
-    for ax in axes[n_strats:]:
-        ax.axis('off')
-
-    axes[-1].set_xlabel("Years", fontsize=12)
-    plt.tight_layout()
-
-    return all_results, fig
+    # Bindings
+    strat_menu.bind("<<ComboboxSelected>>", lambda e: update_plot())
+    ret_shift_var.trace_add("write", lambda *a: update_plot())
+    vol_mult_var.trace_add("write", lambda *a: update_plot())
+    
+    update_plot()
+    return None
