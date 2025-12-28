@@ -93,7 +93,7 @@ These have been used solely to benchmark and validate analysis code within the J
 
 - Synthetic return histories generated via FF5-fitted models  
 - Block / bootstrap-style simulations  
-- Static-weight portfolios  
+- Stress tests: return shift, volatility shocks
 - Multiple withdrawal strategies:
   - Fixed 4% (initial capital)
   - Variable 4% of current capital
