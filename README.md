@@ -153,7 +153,8 @@ These will be introduced as **opt-in layers**, not hardwired assumptions.
   - Negative wealth paths are terminated in Monte Carlo simulations  
 
 ---
-Pull requests are welcome.
+Pull requests, suggestions and bug reports are welcome.
+
 ---
 ## Getting Started
 
@@ -164,7 +165,12 @@ git clone https://github.com/husainm97/quant-lab-alpha.git
 cd quant-lab-alpha
 ```
 
-### 1. **Launch the interface**
+### 2. **Install dependencies**
+```
+python main.py
+```
+
+### 3. **Launch the interface**
 ```
 python main.py
 ```
