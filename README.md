@@ -167,7 +167,7 @@ cd quant-lab-alpha
 
 ### 2. **Install dependencies**
 ```
-python main.py
+pip install requirements.txt
 ```
 
 ### 3. **Launch the interface**
