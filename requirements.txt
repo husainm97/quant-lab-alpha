@@ -1,9 +1,42 @@
-pandas==1.5.3
-numpy==1.24.3
-matplotlib==3.7.1
-statsmodels==0.14.0
-scipy==1.10.1
-seaborn
-requests
-yfinance 
-tkinter
+# Core Data Science & Quant
+numpy==2.4.0
+pandas==2.3.3
+scipy==1.16.3
+statsmodels==0.14.5
+scikit-learn==1.8.0
+pyportfolioopt==1.5.6
+cvxpy==1.7.5
+
+# Data Retrieval & APIs
+yfinance==0.2.66
+requests==2.32.5
+beautifulsoup4==4.14.3
+curl-cffi==0.13.0
+
+# Visualization
+matplotlib==3.10.6
+seaborn==0.13.2
+plotly==5.24.1
+bokeh==3.6.3
+
+# Optimization Solvers
+osqp==1.0.5
+ecos==2.0.14
+clarabel==0.11.1
+scs==3.2.9
+
+# Utilities
+joblib==1.5.3
+numexpr==2.14.1
+bottleneck==1.4.2
+patsy==1.0.1
+peewee==3.18.3
+frozendict==2.4.7
+multitasking==0.0.12
+tenacity==9.1.2
+
+# Environment & Jupyter
+ipython==9.8.0
+ipykernel==7.1.0
+jupyter_client==8.6.3
+traitlets==5.14.3
