@@ -117,7 +117,7 @@ def run_ff5_analysis(master, portfolio_obj: Portfolio = None):
     canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
     # Text box on the right
-    text_box = tk.Text(main_frame, width=90, height=35)
+    text_box = tk.Text(main_frame, width=80, height=35, padx=10, pady=5, wrap="word")
     text_box.pack(side=tk.RIGHT, fill=tk.Y)
 
     # -----------------------------
@@ -224,7 +224,17 @@ def run_ff5_analysis(master, portfolio_obj: Portfolio = None):
 
         text_box.delete("1.0", tk.END)
         text_box.insert(tk.END, f"Rolling regression: {asset_col}\n")
-        text_box.insert(tk.END, "Toggle windows to update.\n")
+        text_box.insert(tk.END,
+        "A rolling regression computes regression coefficients over a moving window of data, rather than using the entire dataset at once. "
+        "This allows tracking how the relationship between variables changes over time. "
+        "For example, a rolling beta of a stock against the market shows how sensitive the stock has been to market movements in different periods.\n\n"
+        "Utility and interpretation:\n"
+        "- Detect time-varying patterns: trends, volatility shifts, or structural changes.\n"
+        "- Evaluate dynamic risk: rolling risk measures like beta or factor exposures.\n"
+        "- Inform strategy adjustments: identify periods when relationships weaken or strengthen.\n"
+        "Interpret rolling regression results with the window size in mind: larger windows smooth out short-term fluctuations but may lag changes; smaller windows react faster but are noisier.\n"
+        "Toggle windows or update the view to refresh the regression over different time horizons."
+        )
 
     # -----------------------------
     # update logic

@@ -9,7 +9,7 @@ if script_dir not in sys.path:
 import portfolio_module as portfolio_module
 
 '''
-Probably need to make an investor an 'agent' who performs actions on the portfolio to run sims with different strategies.  
+This class is a possible future update of an investor as an 'agent' who performs actions on the portfolio to run the bootstrap sims with different "personalised" strategies.  
 '''
 
 class Investor:
