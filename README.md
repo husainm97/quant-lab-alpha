@@ -5,13 +5,15 @@ It is built around the **Fama–French Five-Factor (FF5) Model**, with extension
 
 The framework provides a clean, reproducible workflow for **academic replication**, **portfolio construction**, and **long-horizon outcome analysis**.
 
+This project is intended for **students, researchers, and practitioners** interested in factor-based portfolio analysis and quantitative risk modeling.
+
 ---
 
 ## Disclaimer
 
 **This repository is strictly for educational and research purposes.**  
 All calculations, regressions, and results are **not financial advice**.  
-Past performance does **not guarantee future results**.  
+Past performance does **not guarantee future results**.
 
 Any example portfolios included in this project are **approximations of conceived factor exposure strategies**, not investment recommendations.  
 Users are solely responsible for any decisions or applications derived from this toolkit.
@@ -25,10 +27,22 @@ These have been used solely to benchmark and validate analysis code within the J
 
 ---
 
+## Interactive GUI (Tkinter)  
+**Implemented**
+
+![GUI](images/GUI.png)
+
+- Simplified GUI-based portfolio builder  
+- Save and import portfolios and settings  
+- Toggle leveraged strategies  
+- One-click access to the full analysis suite  
+
+---
+
 ## 1. Fama–French Five-Factor (FF5) Regressions  
 **Implemented**
 
-![Factor Regression](images/Factor_Regression.png)
+![Factor Regression](images/Factor_Regression.png)  
 ![Rolling Regressions](images/Rolling_Regressions.png)
 
 - Factor data ingestion from the Ken French Data Library  
@@ -46,7 +60,8 @@ These have been used solely to benchmark and validate analysis code within the J
 - Mean–variance optimization  
 - Covariance estimation from historical or factor-implied returns  
 - Efficient frontier construction  
-- Optimal portfolios under classical Markowitz assumptions  
+- **Ledoit–Wolf covariance matrix shrinkage**  
+- Direct application of optimal weights to the active portfolio  
 
 ---
 
@@ -54,11 +69,10 @@ These have been used solely to benchmark and validate analysis code within the J
 **Implemented**
 
 ![Risk Report](images/Risk_Report.png)
-![Risk Assessment](images/Risk_Assessment.png)
 
-- Historical drawdown chart  
-- Asset and Factor level risk contribution assessment  
-- Monthly CVaR/VaR at 95% confidence  
+- Historical drawdown analysis  
+- Asset- and factor-level risk contribution assessment  
+- Monthly CVaR and VaR at 95% confidence  
 
 ---
 
@@ -67,8 +81,8 @@ These have been used solely to benchmark and validate analysis code within the J
 
 ![Correlation Matrix](images/Correlation_Matrix.png)
 
-- Check inter-asset correlations (-1, 1)  
-- Heatmap view  
+- Inter-asset correlation inspection (−1 to 1)  
+- Heatmap visualization for rapid structure assessment  
 
 ---
 
@@ -84,17 +98,16 @@ These have been used solely to benchmark and validate analysis code within the J
   - Fixed 4% (initial capital)
   - Variable 4% of current capital
   - Guardrails (2.5–5%)
-  - Bucket strategy
+  - Bucket strategy  
 - Failure probability and terminal wealth analysis  
 
 **In Development**
-- Improved stress testing and scenario labeling
-- Plug and play strategy implementation
+- Improved stress testing and scenario labeling  
+- Plug-and-play withdrawal strategy implementation  
 
 ---
 
-## Currency Support
-
+## Currency Support  
 **Implemented**
 
 - Automatic currency detection via Yahoo Finance metadata  
@@ -105,36 +118,42 @@ These have been used solely to benchmark and validate analysis code within the J
 
 ## Assumptions and Limitations
 
-As a toolkit built to study financial theory, a number of regional and broker-dependent real world effects are excluded for simplicity. This alters the outcome from what may be realistically achievable. Differences may be accounted for externally when choosing inputs. The following limitations must be kept in mind:  
+As a toolkit designed to study financial theory, several regional, institutional, and broker-dependent real-world effects are intentionally excluded. This simplifies interpretation but may deviate from realizable outcomes.
 
-- Currently all assets are converted to USD to allow for cross currency portfolios and regressions to academic factors
-- Portfolio weights are currently assumed to remain constant; drift and rebalancing are planned in a future update
-- Leverage multipliers assumed to be constant; realistically hard borrowing limits, maximum permitted loan-to-value ratios and margin calls significantly limit this strategy
-- Assets with short histories are extended using synthetic returns generated from FF5 regressions  
-- Taxes are **not** modeled; withdrawals currently represent spending *plus* taxes  
-- The Markowitz optimizer runs on a limited random sample; direct solvers (e.g. `pypfopt`) would yield more robust solutions  
-- Primary market data is sourced from Yahoo Finance; additional data providers are planned  
+Key limitations include:
+
+- All assets are converted to USD to enable cross-currency factor regressions  
+- Portfolio weights are assumed to remain constant (rebalancing planned)  
+- Leverage multipliers are static; real-world borrowing constraints are not modeled  
+- Assets with short histories may be extended using FF5-based synthetic returns  
+- Taxes are **not** modeled; withdrawals represent spending *plus* taxes  
+- The Markowitz optimizer uses randomized sampling; direct solvers (e.g. `pypfopt`) would be more robust  
+- Market data is sourced from Yahoo Finance; additional providers are planned  
 
 ---
 
 ## Realism Update™ (In Development)
 
-Features that materially increase realism but are currently separated to keep the core engine clean and interpretable:
+Features that materially increase realism but are intentionally separated to keep the core engine clean and interpretable:
 
 - **Portfolio rebalancing**
 - **Inflation-adjusted withdrawals**
-- Limited leverage model imposing hard loan amount cap, loan-to-value ratio and margin calls
+- Limited leverage model with loan-to-value caps and margin calls  
 - Real (not just nominal) return tracking  
 - Stress testing with ±1% return and +20% volatility shocks  
 
-These features are planned as **opt-in layers**, not hardwired assumptions.
+These will be introduced as **opt-in layers**, not hardwired assumptions.
 
 ---
 
 ## Known Issues
-- Currently empty, please report any bugs to me directly at **husainm97@gmail.com**
-- Recent fixes: Markowitz optimiser weights now apply in Treeview, negative wealth paths are terminated in simulations
+- Currently none. Please report bugs directly to **husainm97@gmail.com**  
+- Recent fixes:
+  - Markowitz optimizer weights now correctly apply in the Treeview  
+  - Negative wealth paths are terminated in Monte Carlo simulations  
 
+---
+Pull requests are welcome.
 ---
 ## Getting Started
 
