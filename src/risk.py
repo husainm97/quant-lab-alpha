@@ -63,7 +63,6 @@ def plot_risk_dashboard(root, portfolio_obj):
 
     # --- Calculations ---
     m = calculate_risk_metrics(port_returns, weights, cov_matrix)
-    m["Drawdown_Series"] *= 100
     ff_df = fetch_ff5_monthly()
     ff_df.index = ff_df.index.to_period("M").to_timestamp("M")
     f_contrib, f_ratio = calculate_factor_risk(port_returns, ff_df)
@@ -75,8 +74,8 @@ def plot_risk_dashboard(root, portfolio_obj):
 
     # Plot 1: Drawdown (Bright Red)
     ax_draw = fig.add_subplot(gs[0, :])
-    ax_draw.fill_between(m["Drawdown_Series"].index, m["Drawdown_Series"], 0, color='#ff0000', alpha=0.4)
-    ax_draw.plot(m["Drawdown_Series"].index, m["Drawdown_Series"], color='#ff0000', linewidth=1)
+    ax_draw.fill_between(m["Drawdown_Series"].index, m["Drawdown_Series"]*100, 0, color='#ff0000', alpha=0.4)
+    ax_draw.plot(m["Drawdown_Series"].index, m["Drawdown_Series"]*100, color='#ff0000', linewidth=1)
     ax_draw.set_title("Historical Drawdown Profile (Underwater Chart)", fontweight='bold', fontsize=12)
     ax_draw.set_ylabel("Drawdown (%)")
     ax_draw.set_xlabel("Year")
@@ -84,9 +83,9 @@ def plot_risk_dashboard(root, portfolio_obj):
     
     # Plot 2: Distribution & Tail Risk (Bottom Right)
     ax_dist = fig.add_subplot(gs[1, 1])
-    ax_dist.hist(port_returns, bins=35, color='#3498db', alpha=0.5, edgecolor='white')
-    ax_dist.axvline(-m["VaR_95"], color='orange', ls='--', lw=2, label=f'VaR: {m["VaR_95"]:.1%}')
-    ax_dist.axvline(-m["CVaR_95"], color='red', lw=2, label=f'CVaR: {m["CVaR_95"]:.1%}')
+    ax_dist.hist(port_returns*100, bins=35, color='#3498db', alpha=0.5, edgecolor='white')
+    ax_dist.axvline(-m["VaR_95"]*100, color='orange', ls='--', lw=2, label=f'VaR: {m["VaR_95"]:.1%}')
+    ax_dist.axvline(-m["CVaR_95"]*100, color='red', lw=2, label=f'CVaR: {m["CVaR_95"]:.1%}')
     ax_dist.set_title("Return Distribution & Tail Risk", fontweight='bold')
     ax_dist.set_ylabel("Frequency")
     ax_dist.set_xlabel("Monthly Return (%)")
