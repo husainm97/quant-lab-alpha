@@ -63,6 +63,7 @@ def plot_risk_dashboard(root, portfolio_obj):
 
     # --- Calculations ---
     m = calculate_risk_metrics(port_returns, weights, cov_matrix)
+    m["Drawdown_Series"] *= 100
     ff_df = fetch_ff5_monthly()
     ff_df.index = ff_df.index.to_period("M").to_timestamp("M")
     f_contrib, f_ratio = calculate_factor_risk(port_returns, ff_df)
