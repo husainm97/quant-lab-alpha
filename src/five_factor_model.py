@@ -188,7 +188,9 @@ def run_ff5_analysis(master, portfolio_obj: Portfolio = None):
             (60, show_5y.get(), '5y'),
             (120, show_10y.get(), '10y'),
         ]
-
+        
+        ax.set_ylabel("Betas")
+        ax.set_xlabel("Year")
         plotted_factors = set()
         for W, enabled, label in windows:
             if not enabled:

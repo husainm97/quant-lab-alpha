@@ -210,6 +210,8 @@ def run_simulation(root, portfolio_obj=None, returns_df=None, config=None):
         padding = max(START_CAPITAL, np.max(p95_path))*0.1
         ax.set_ylim(np.min(p5_path)-padding, np.max(p95_path)+padding)
         ax.set_title(f"Monte Carlo: {strat_var.get()}", loc='center', fontweight='bold')
+        ax.set_ylabel("Wealth (USD)")
+        ax.set_xlabel("Years in Retirement")
         ax.legend(loc="upper left")
         ax.grid(alpha=0.3)
         canvas.draw()

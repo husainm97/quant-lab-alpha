@@ -77,6 +77,8 @@ def plot_risk_dashboard(root, portfolio_obj):
     ax_draw.fill_between(m["Drawdown_Series"].index, m["Drawdown_Series"], 0, color='#ff0000', alpha=0.4)
     ax_draw.plot(m["Drawdown_Series"].index, m["Drawdown_Series"], color='#ff0000', linewidth=1)
     ax_draw.set_title("Historical Drawdown Profile (Underwater Chart)", fontweight='bold', fontsize=12)
+    ax_draw.set_ylabel("Drawdown (%)")
+    ax_draw.set_xlabel("Year")
     ax_draw.grid(True, linestyle=':', alpha=0.6)
     
     # Plot 2: Distribution & Tail Risk (Bottom Right)
@@ -85,6 +87,8 @@ def plot_risk_dashboard(root, portfolio_obj):
     ax_dist.axvline(-m["VaR_95"], color='orange', ls='--', lw=2, label=f'VaR: {m["VaR_95"]:.1%}')
     ax_dist.axvline(-m["CVaR_95"], color='red', lw=2, label=f'CVaR: {m["CVaR_95"]:.1%}')
     ax_dist.set_title("Return Distribution & Tail Risk", fontweight='bold')
+    ax_dist.set_ylabel("Frequency")
+    ax_dist.set_xlabel("Monthly Return (%)")
     ax_dist.legend()
 
     # Plot 3: Dynamic Bar Chart (Bottom Left)
@@ -183,7 +187,7 @@ def plot_risk_dashboard(root, portfolio_obj):
             font=("Helvetica", 10, "bold")
         ).grid(row=0, column=i * 2, padx=5)
 
-        color = "red" if any(k in label for k in ["Drawdown", "VaR", "CVaR"]) else "black"
+        color = "red" if any(k in label for k in ["Vol", "Drawdown", "VaR", "CVaR"]) else "black"
 
         ttk.Label(
             stats_frame,
