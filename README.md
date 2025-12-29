@@ -146,7 +146,6 @@ Features that materially increase realism but are currently separated from the c
 - **Inflation-adjusted withdrawals**
 - Limited leverage model with loan-to-value caps and margin calls  
 - Real (not just nominal) return tracking  
-- Stress testing with ±1% return and +20% volatility shocks  
 
 These will be introduced as **opt-in layers**, not hardwired assumptions.
 
