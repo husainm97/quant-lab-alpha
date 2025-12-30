@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+*.Zone.Identifier
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.dockerignore
+
+# Cache files
+yfinance.cache
+*.cache
+
+# Saved portfolios (optional - comment out if you want these in Docker)
+# saved_portfolios/
+
+# Environment
+.env
+.env.local

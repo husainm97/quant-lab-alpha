@@ -1,0 +1,20 @@
+services:
+  quant-lab:
+    build: .
+    container_name: quant-lab-alpha
+    ports:
+      - "8888:8888"
+    volumes:
+      # Mount project directory
+      - .:/app
+      # Persist Jupyter data
+      - jupyter-data:/root/.jupyter
+      # Persist yfinance cache
+      - yfinance-cache:/root/.cache/py-yfinance
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
+
+volumes:
+  jupyter-data:
+  yfinance-cache:
