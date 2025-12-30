@@ -152,7 +152,7 @@ These will be introduced as **opt-in layers**, not hardwired assumptions.
 ---
 
 ## Known Issues
-- Currently none.
+- Currently none. Please open an issue or contact the developer to report a bug.
 - Recent fixes:
   - Markowitz optimiser weights now correctly apply in the Treeview  
   - Negative wealth paths are terminated in Monte Carlo simulations
@@ -171,7 +171,7 @@ git clone https://github.com/husainm97/quant-lab-alpha.git
 cd quant-lab-alpha
 ```
 
-### 2. **Install dependencies**
+### 2. **Install dependencies** 
 ```
 pip install -r requirements.txt
 ```
@@ -180,3 +180,23 @@ pip install -r requirements.txt
 ```
 python main.py
 ```
+## 🛠️ Prerequisites & Troubleshooting
+
+This project uses **Tkinter** for the graphical user interface. Many Linux distributions (like Ubuntu and Fedora) package Python modularly and do not include Tkinter by default.
+
+If you encounter `ModuleNotFoundError: No module named 'tkinter'`, run the command for your specific operating system:
+
+### 🐧 Linux Setup
+* **Ubuntu / Debian / Mint / Kali:**
+    ```bash
+    sudo apt update
+    sudo apt install python3-tk
+    ```
+* **Fedora / RHEL / CentOS:**
+    ```bash
+    sudo dnf install python3-tkinter
+    ```
+* **Arch Linux:**
+    ```bash
+    sudo pacman -S tk
+    ```
