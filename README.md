@@ -202,3 +202,96 @@ If you encounter `ModuleNotFoundError: No module named 'tkinter'`, run the comma
     ```bash
     sudo pacman -S tk
     ```
+## 🐳 Docker Setup
+
+This project includes Docker configuration for a reproducible development environment with all dependencies pre-installed.
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) installed and running
+
+### Quick Start with Docker
+
+1. **Clone the repository:**
+```bash
+   git clone https://github.com/dhruva-divate/quant-lab-alpha.git
+   cd quant-lab-alpha
+```
+
+2. **Build the Docker image:**
+```bash
+   docker-compose build
+```
+
+3. **Start the container:**
+```bash
+   docker-compose up
+```
+
+4. **Access Jupyter Lab:**
+   Open your browser and navigate to:
+```
+   http://localhost:8888
+```
+
+### Daily Workflow
+```bash
+# Start working
+docker-compose up
+
+# Access Jupyter Lab at http://localhost:8888
+# Make your changes in notebooks or code
+
+# Stop the container (Ctrl+C in terminal, or:)
+docker-compose down
+```
+
+### Running the GUI
+
+**Note:** The Tkinter GUI (`main.py`) requires a display and is best run locally on your machine:
+```bash
+# Install dependencies locally
+pip install -r requirements.txt
+
+# Run the GUI
+python main.py
+```
+
+For Docker users who want to run the GUI, X11 forwarding setup is required (advanced).
+
+### Docker Commands
+```bash
+# Start container in background (detached mode)
+docker-compose up -d
+
+# View container logs
+docker-compose logs
+
+# Stop container
+docker-compose down
+
+# Rebuild after changes to Dockerfile or requirements.txt
+docker-compose build --no-cache
+
+# Open a shell inside the container
+docker exec -it quant-lab-alpha bash
+
+# Run Python scripts inside container
+docker exec -it quant-lab-alpha python your_script.py
+```
+
+### What's Included
+
+The Docker environment provides:
+- **Python 3.11** with all project dependencies
+- **Jupyter Lab** for interactive development
+- **Persistent volumes** for Jupyter settings
+- **Live code editing** - changes to local files are immediately reflected in the container
+
+### Advantages of Docker
+
+ **Reproducible environment** - Same setup on any machine  
+ **No dependency conflicts** - Isolated from your system Python  
+ **Easy collaboration** - Share exact development environment  
+ **Quick onboarding** - New contributors just run `docker-compose up`
+
+---
