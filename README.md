@@ -1,4 +1,4 @@
-# 📊 quant-lab-alpha — Portfolio Factor Regression & Analysis Toolkit
+# 📊 quant-lab-alpha — Portfolio Factor Regression & Analysis Toolkit ![Python Version](https://img.shields.io/badge/python-3.12%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green) ![Financial Math](https://img.shields.io/badge/math-HMM%20%7C%20FF5-orange)
 
 **Quant Lab Alpha** is a Python toolkit designed to quantify **where portfolio risk comes from, how it evolves over time, and the statistical distribution of outcomes**.
 
