@@ -1,4 +1,4 @@
-# quant-lab-alpha — Portfolio Factor Regression & Analysis Toolkit
+# 📊 quant-lab-alpha — Portfolio Factor Regression & Analysis Toolkit
 
 **Quant Lab Alpha** is a Python toolkit designed to quantify **where portfolio risk comes from, how it evolves over time, and the statistical distribution of outcomes**.
 
@@ -6,31 +6,30 @@ It bridges the gap between static factor analysis and long-horizon strategy mode
 
 The framework is built around the **Fama–French Five-Factor (FF5) Model**, with extensions into **rolling factor regressions**, **block bootstrap simulations**, and **stabilised Markowitz portfolio optimisation** to visualise both risk structure and long-term outcomes under market-like and stressed conditions.
 
-Methodological explanations, validation notebooks, and visual diagnostics are provided under `notebooks/`.  
-For questions, comments, or bug reports, contact **husainm97@gmail.com**.
-
+📓 Methodological explanations, validation notebooks, and visual diagnostics are provided under `notebooks/`.  
+📬 For questions, comments, or bug reports, contact **husainm97@gmail.com**.
 
 ---
 
-## Disclaimer
+## ⚠️ Disclaimer
 
 **This repository is intended for quantifying risk exposures and statistical outcomes.**  
 All calculations, regressions, and results are **not financial advice**.  
-Past performance does **not guarantee future results**. 
+Past performance does **not guarantee future results**.
 
 Any example portfolios included in this project are **approximations of conceived factor exposure strategies**, not investment recommendations.  
 Users are solely responsible for any decisions or applications derived from this toolkit.
 
 ---
 
-## Acknowledgements
+## 🙏 Acknowledgements
 
 The developer thanks **Curvo.eu** and **Benjamin Felix (PWL Capital, Canada)** for permission to use selected datasets and published results.  
 These have been used solely to benchmark and validate analysis code within the Jupyter notebooks.
 
 ---
 
-## Interactive GUI (Tkinter)  
+## 🖥️ Interactive GUI (Tkinter)  
 **Implemented**
 
 ![GUI](images/GUI.png)
@@ -42,20 +41,20 @@ These have been used solely to benchmark and validate analysis code within the J
 
 ---
 
-## 1. Fama–French Five-Factor (FF5) Regressions  
+## 1️⃣ Fama–French Five-Factor (FF5) Regressions  
 **Implemented**
 
 ![Factor Regression](images/Factor_Regression.png)  
 ![Rolling Regressions](images/Rolling_Regressions.png)
 
 - Factor data ingestion from the Ken French Data Library  
-- Portfolio- and asset-level risk factor regressions
+- Portfolio- and asset-level risk factor regressions  
 - **Rolling regressions** over configurable windows (e.g. 3y / 5y / 10y)  
 - Factor exposure, alpha, and contribution analysis  
 
 ---
 
-## 2. Markowitz Portfolio Optimiser  
+## 2️⃣ Markowitz Portfolio Optimiser  
 **Implemented**
 
 ![Markowitz Optimisation](images/Markowitz.png)
@@ -68,7 +67,7 @@ These have been used solely to benchmark and validate analysis code within the J
 
 ---
 
-## 3. Risk Report  
+## 3️⃣ Risk Report  
 **Implemented**
 
 ![Risk Report](images/Risk_Report.png)
@@ -79,28 +78,28 @@ These have been used solely to benchmark and validate analysis code within the J
 
 ---
 
-## 4. Correlation Matrix  
+## 4️⃣ Correlation Matrix  
 **Implemented**
 
 ![Correlation Matrix](images/Correlation_Matrix.png)
 
-- Inter-asset correlation inspection
+- Inter-asset correlation inspection  
 - Heatmap visualisation for rapid structure assessment  
 
 ---
 
-## 5. Monte Carlo Retirement Simulation  
+## 5️⃣ Monte Carlo Retirement Simulation  
 **Implemented**
 
 ![Monte Carlo Simulation](images/Monte_Carlo.png)
 
 - Synthetic return histories generated via FF5-fitted models  
 - Block / bootstrap-style simulations  
-- Stress tests: return shift, volatility shocks
+- Stress tests: return shift, volatility shocks  
 - Multiple withdrawal strategies:
-  - Fixed 4% (initial capital)
-  - Variable 4% of current capital
-  - Guardrails (2.5–5%)
+  - Fixed 4% (initial capital)  
+  - Variable 4% of current capital  
+  - Guardrails (2.5–5%)  
   - Bucket strategy  
 - Failure probability and terminal wealth analysis  
 
@@ -110,7 +109,7 @@ These have been used solely to benchmark and validate analysis code within the J
 
 ---
 
-## Currency Support  
+## 💱 Currency Support  
 **Implemented**
 
 - Automatic currency detection via Yahoo Finance metadata  
@@ -119,15 +118,15 @@ These have been used solely to benchmark and validate analysis code within the J
 
 ---
 
-## Assumptions and Limitations
+## ⚖️ Assumptions and Limitations
 
 To maintain interpretability and analytical clarity, several regional, institutional, and broker-dependent real-world effects are intentionally excluded:
 
 Key limitations include:
 
 - All assets are converted to USD to enable cross-currency factor regressions  
-- Portfolio weights are assumed to remain constant (rebalancing planned)
-- Transaction costs are not modelled
+- Portfolio weights are assumed to remain constant (rebalancing planned)  
+- Transaction costs are not modelled  
 - Leverage multipliers are static; real-world borrowing constraints are not modelled  
 - Assets with short histories may be extended using FF5-based synthetic returns  
 - Taxes are **not** modelled; withdrawals represent spending *plus* taxes  
@@ -138,12 +137,12 @@ This simplifies interpretation but may deviate from realisable outcomes.
 
 ---
 
-## Realism Update (In Development)
+## 🧪 Realism Update (In Development)
 
 Features that materially increase realism but are currently separated from the core engine:
 
-- **Portfolio rebalancing**
-- **Inflation-adjusted withdrawals**
+- **Portfolio rebalancing**  
+- **Inflation-adjusted withdrawals**  
 - Limited leverage model with loan-to-value caps and margin calls  
 - Real (not just nominal) return tracking  
 
@@ -151,18 +150,21 @@ These will be introduced as **opt-in layers**, not hardwired assumptions.
 
 ---
 
-## Known Issues
-- Currently none. Please open an issue or contact the developer to report a bug.
+## 🐞 Known Issues
+
+- Currently none. Please open an issue or contact the developer to report a bug.  
 - Recent fixes:
   - Markowitz optimiser weights now correctly apply in the Treeview  
-  - Negative wealth paths are terminated in Monte Carlo simulations
-  - Leverage application before simulations fixed
+  - Negative wealth paths are terminated in Monte Carlo simulations  
+  - Leverage application before simulations fixed  
 
 ---
+
 Pull requests, suggestions and bug reports are welcome.
 
 ---
-## Getting Started
+
+## 🚀 Getting Started
 
 ### 1. Clone the repository
 ```
