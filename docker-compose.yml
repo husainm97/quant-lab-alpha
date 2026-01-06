@@ -6,9 +6,11 @@ services:
       - "8888:8888"
     volumes:
       - .:/app
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - jupyter-data:/root/.jupyter
     environment:
       - PYTHONUNBUFFERED=1
+      - DISPLAY=host.docker.internal:0
     command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
 
 volumes:
