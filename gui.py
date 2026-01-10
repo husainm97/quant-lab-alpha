@@ -20,12 +20,15 @@ class PortfolioGUI:
         self.root.title("Portfolio Builder")
         self.root.geometry("720x550")
 
+        self.root.update_idletasks()
+        self.root.minsize(720, 550)
+        self.root.resizable(True, True)
+        
         self.portfolio = []
         self.strategy_params = {}
         self.leverage = 1.0
         self.interest_rate = 0.0
         self.portfolio_obj = Portfolio()
-
         self._build_ui()
 
     # =============================
@@ -42,21 +45,22 @@ class PortfolioGUI:
     # =============================
     def _build_portfolio_section(self):
         frame = ttk.LabelFrame(self.root, text="Select Assets", padding=10)
-        frame.pack(fill="x", padx=10, pady=10)
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        ttk.Label(frame, text="Source:").grid(row=0, column=0, padx=5, pady=5)
+        input_wrapper = ttk.Frame(frame)
+        input_wrapper.grid(row=0, column=0, columnspan=8, sticky="w")
+
+        ttk.Label(input_wrapper, text="Source:").pack(side="left", padx=2)
         self.source_var = tk.StringVar(value="Yahoo")
-        ttk.Combobox(frame, textvariable=self.source_var, values=["Yahoo", "Source", "Manual"], width=10).grid(
-            row=0, column=1, padx=5, pady=5
-        )
+        ttk.Combobox(input_wrapper, textvariable=self.source_var, values=["Yahoo", "Source", "Manual"], width=10).pack(side="left", padx=5)
 
-        ttk.Label(frame, text="Ticker:").grid(row=0, column=2, padx=5, pady=5)
+        ttk.Label(input_wrapper, text="Ticker:").pack(side="left", padx=2)
         self.ticker_var = tk.StringVar()
-        ttk.Entry(frame, textvariable=self.ticker_var, width=12).grid(row=0, column=3, padx=5, pady=5)
+        ttk.Entry(input_wrapper, textvariable=self.ticker_var, width=12).pack(side="left", padx=5)
 
-        ttk.Label(frame, text="Allocation (%):").grid(row=0, column=4, padx=5, pady=5)
+        ttk.Label(input_wrapper, text="Alloc (%):").pack(side="left", padx=2)
         self.allocation_var = tk.DoubleVar(value=0.0)
-        ttk.Entry(frame, textvariable=self.allocation_var, width=6).grid(row=0, column=5, padx=5, pady=5)
+        ttk.Entry(input_wrapper, textvariable=self.allocation_var, width=6).pack(side="left", padx=5)
 
         self.add_button = ttk.Button(frame, text="Add", command=self.add_asset)
         self.add_button.grid(row=0, column=6, padx=10, pady=5)
@@ -77,7 +81,9 @@ class PortfolioGUI:
         for col in columns:
             self.tree.heading(col, text=col)
             self.tree.column(col, width=180)
-        self.tree.grid(row=1, column=0, columnspan=8, pady=10)
+        self.tree.grid(row=1, column=0, columnspan=8, pady=10, sticky="nsew")
+        frame.grid_rowconfigure(1, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
 
         # Allocation display
         self.alloc_label = ttk.Label(frame, text="Total Allocation: 0.0%", font=("Arial", 10, "bold"))
@@ -445,4 +451,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = PortfolioGUI(root)
     root.mainloop()
-
