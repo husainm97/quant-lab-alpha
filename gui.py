@@ -19,10 +19,10 @@ class PortfolioGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Portfolio Builder")
-        self.root.geometry("750x600")
+        self.root.geometry("1080x900")
 
         self.root.update_idletasks()
-        self.root.minsize(720, 600)
+        self.root.minsize(1080, 900)
         self.root.resizable(True, True)
 
         sv_ttk.set_theme("light") # Start with light
