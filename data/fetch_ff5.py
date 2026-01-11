@@ -43,7 +43,6 @@ def fetch_ff5_monthly(region="Developed"):
 
     url = FF5_REGIONS[region]
     
-    
     try:
         r = requests.get(url)
         r.raise_for_status()

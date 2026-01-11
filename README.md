@@ -32,7 +32,7 @@ These have been used solely to benchmark and validate analysis code within the J
 ## 🖥️ Interactive GUI (Tkinter)  
 **Implemented**
 
-![GUI](images/GUI.png)
+![GUI](images/v1-0-1/GUI_Light.png.png)
 
 - Simplified GUI-based portfolio builder  
 - Save and import portfolios and settings  
@@ -44,8 +44,8 @@ These have been used solely to benchmark and validate analysis code within the J
 ## 1️⃣ Fama–French Five-Factor (FF5) Regressions  
 **Implemented**
 
-![Factor Regression](images/Factor_Regression.png)  
-![Rolling Regressions](images/Rolling_Regressions.png)
+![Factor Regression](images/v-1-0-1/Factor_Regression_Light.png)  
+![Rolling Regressions](images/v1-0-1/Rolling_Regressions_Light.png)
 
 - Factor data ingestion from the Ken French Data Library  
 - Portfolio- and asset-level risk factor regressions  
@@ -57,7 +57,7 @@ These have been used solely to benchmark and validate analysis code within the J
 ## 2️⃣ Markowitz Portfolio Optimiser  
 **Implemented**
 
-![Markowitz Optimisation](images/Markowitz.png)
+![Markowitz Optimisation](images/v1-0-1/Markowitz_Light.png)
 
 - Mean–variance optimisation  
 - Covariance estimation from historical or factor-implied returns  
@@ -70,7 +70,7 @@ These have been used solely to benchmark and validate analysis code within the J
 ## 3️⃣ Risk Report  
 **Implemented**
 
-![Risk Report](images/Risk_Report.png)
+![Risk Report](images/v1-0-0/Risk_Report.png)
 
 - Historical drawdown analysis  
 - Asset- and factor-level risk contribution assessment  
@@ -81,7 +81,7 @@ These have been used solely to benchmark and validate analysis code within the J
 ## 4️⃣ Correlation Matrix  
 **Implemented**
 
-![Correlation Matrix](images/Correlation_Matrix.png)
+![Correlation Matrix](images/v1-0-0/Correlation_Matrix.png)
 
 - Inter-asset correlation inspection  
 - Heatmap visualisation for rapid structure assessment  
@@ -91,7 +91,8 @@ These have been used solely to benchmark and validate analysis code within the J
 ## 5️⃣ Monte Carlo Retirement Simulation  
 **Implemented**
 
-![Monte Carlo Simulation](images/Monte_Carlo.png)
+![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Light.png)
+![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Diag.png)
 
 - Synthetic return histories generated via FF5-fitted models  
 - Block / bootstrap-style simulations  
@@ -124,7 +125,7 @@ To maintain interpretability and analytical clarity, several regional, instituti
 
 Key limitations include:
 
-- All assets are converted to USD to enable cross-currency factor regressions  
+- Available currencies are currently limited to 9 options: "USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "CNY", "INR"
 - Portfolio weights are assumed to remain constant (rebalancing planned)  
 - Transaction costs are not modelled  
 - Leverage multipliers are static; real-world borrowing constraints are not modelled  
@@ -142,7 +143,7 @@ This simplifies interpretation but may deviate from realisable outcomes.
 Features that materially increase realism but are currently separated from the core engine:
 
 - **Portfolio rebalancing**  
-- **Inflation-adjusted withdrawals**  
+- <del>**Inflation-adjusted withdrawals**</del> [Done ✅]
 - Limited leverage model with loan-to-value caps and margin calls  
 - Real (not just nominal) return tracking  
 
@@ -152,7 +153,7 @@ These will be introduced as **opt-in layers**, not hardwired assumptions.
 
 ## 🐞 Known Issues
 
-- Currently none. Please open an issue or contact the developer to report a bug.  
+- Please check out the Issues tab to open an issue or contact the developer to report a bug.  
 - Recent fixes:
   - Markowitz optimiser weights now correctly apply in the Treeview  
   - Negative wealth paths are terminated in Monte Carlo simulations  
