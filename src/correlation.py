@@ -4,7 +4,13 @@ from matplotlib.colors import Normalize
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
-def plot_correlation_heatmap(parent, portfolio_obj, method="pearson"):
+def plot_correlation_heatmap(parent, portfolio_obj, method="pearson", is_dark = False,):
+
+    if is_dark:
+        plt.style.use('dark_background')
+    else:
+        plt.style.use('default')
+        
     returns_df = portfolio_obj.get_common_monthly_returns()
     corr = returns_df.corr(method=method)
 

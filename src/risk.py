@@ -53,7 +53,13 @@ def calculate_factor_risk(port_returns, ff_df):
     f_contrib = (betas * (f_cov @ betas)) / total_var
     return pd.Series(f_contrib, index=factors), (y.var() - model.resid.var()) / y.var()
 
-def plot_risk_dashboard(root, portfolio_obj):
+def plot_risk_dashboard(root, portfolio_obj, is_dark = False,):
+
+    if is_dark:
+        plt.style.use('dark_background')
+    else:
+        plt.style.use('default')
+        
     # --- Data Prep ---
     returns_df = portfolio_obj.get_common_monthly_returns()
     tickers = list(returns_df.columns)

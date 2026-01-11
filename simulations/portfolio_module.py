@@ -15,6 +15,8 @@ class Portfolio:
         self.interest_rate: float = 0.0
         self.cash: float = 0.0  # optional — for unallocated funds or interest accrual
         self.data: Dict[str, "pd.DataFrame"] = {}  # ticker -> fetched price/return DataFrame
+        self.base_currency = 'USD'
+        self.factor_region = 'Developed'
 
     def _price_to_monthly_returns(self, price_series: pd.Series) -> pd.Series:
         """
@@ -25,63 +27,83 @@ class Portfolio:
         daily_ret = prices.pct_change().dropna()
         monthly_ret = (1 + daily_ret).resample('ME').prod() - 1
         return monthly_ret.dropna()
+    
+    def _convert_to_base_currency(self, price_series: pd.Series, currency: str, target_currency: str) -> pd.Series:
+        """
+        Converts a price series from `currency` to `target_currency`, keeping all safeguards:
+        - Flatten multi-index FX data
+        - Reset index before merging
+        - Merge on Date
+        - Preserve datetime index
+        """
+        if currency == target_currency:
+            return price_series.copy()
+
+        fx_ticker = f"{currency}{target_currency}=X"
+        fx_df = yf.download(fx_ticker,
+                            start=price_series.index[0],
+                            end=price_series.index[-1],
+                            auto_adjust=True,
+                            progress=False)
+
+        # Flatten multi-index if present
+        if isinstance(fx_df.columns, pd.MultiIndex):
+            fx_df.columns = [col[0] for col in fx_df.columns]
+
+        if 'Close' not in fx_df.columns:
+            raise ValueError(f"FX data for {fx_ticker} has no Close column")
+
+        fx_series = fx_df['Close'].copy()
+        fx_series.index = pd.to_datetime(fx_series.index)
+
+        # Reset index and merge on Date
+        price_df = price_series.reset_index().rename(columns={'index': 'Date'})
+        fx_df_reset = fx_series.reset_index().rename(columns={'Close': 'FX'})
+        merged = pd.merge(price_df, fx_df_reset, on='Date', how='inner')
+
+        # Conversion
+        merged['converted'] = merged.iloc[:, 1] * merged['FX']
+
+        # Restore datetime index
+        converted = merged.set_index('Date')['converted']
+
+        return converted
 
     def add_asset(self, ticker: str, weight: float, df: pd.DataFrame = None):
-        """
-        Add or update an asset weight in the portfolio.
-        Optionally store its fetched data as a DataFrame.
-        """
         if weight < 0:
             raise ValueError("Weight cannot be negative.")
         self.constituents[ticker] = weight
+
         if df is not None:
-            # extract price series
+            # Extract price series
             if 'Adj Close' in df.columns:
                 price = df['Adj Close']
             elif 'Close' in df.columns:
                 price = df['Close']
             else:
                 raise ValueError(f"No Close/Adj Close column in {ticker} data.")
-            
+
             t = yf.Ticker(ticker)
-            info = t.info  # dictionary with metadata
+            info = t.info
             currency = info.get('currency', 'USD')
-            if currency != 'USD':
-                # Non-USD currency detected, here we pull the exchange data from yfinance to convert to USD for correct ff5 analysis
-                
-                forex_ticker = f'{currency}USD=X'
-                # download EUR/USD FX data
-                start_date = df.index[0]
-                end_date = df.index[-1]
 
-                eurusd_df = yf.download(forex_ticker, start=start_date, end=end_date, auto_adjust=True, progress=False)
+            # USD copy for FF5
+            prices_usd = price.copy() if currency == 'USD' else self._convert_to_base_currency(price, currency, target_currency='USD')
 
-                # If it's a multi-index (common with auto_adjust), flatten
-                if isinstance(eurusd_df.columns, pd.MultiIndex):
-                    eurusd_df.columns = [col[0] for col in eurusd_df.columns]
+            # Portfolio base currency
+            prices_base = price.copy() if currency == self.base_currency else self._convert_to_base_currency(price, currency, target_currency=self.base_currency)
 
-                eurusd_df = eurusd_df[['Close']].copy()
-                eurusd_df = eurusd_df.rename(columns={'Close': 'EURUSD'}).reset_index()
+            # Monthly returns based on base currency
+            monthly_returns = self._price_to_monthly_returns(prices_base)
 
-                # merge price DataFrame with FX rates
-                price_df = price.reset_index().rename(columns={'index': 'Date'})
-                merged = pd.merge(price_df, eurusd_df, on='Date', how='inner')
-
-                # convert EUR → USD
-                merged[ticker] = merged.iloc[:, 1] * merged['EURUSD']  # the ETF price column is the second column
-
-                # restore datetime index
-                merged['Date'] = pd.to_datetime(merged['Date'])
-                price = merged.set_index('Date')[ticker]
-                #print(f"Warning: Currency of {ticker} was converted from {currency} to USD.")
-
-            monthly_returns = self._price_to_monthly_returns(price)
+            # Store both
             self.data[ticker] = {
-                'prices': df.copy(),
+                'prices': prices_base,
+                'prices_usd': prices_usd,
                 'monthly_returns': monthly_returns
             }
-        self._normalize_weights()
 
+        self._normalize_weights()
 
     def remove_asset(self, ticker: str):
         """Remove an asset and its data from the portfolio."""
@@ -117,13 +139,22 @@ class Portfolio:
         weights = np.array([self.constituents[t] for t in tickers])
         return self.leverage**2 * weights.T @ cov_matrix @ weights
     
-    def get_common_monthly_returns(self) -> pd.DataFrame:
+    def get_common_monthly_returns(self, use_usd: bool = False) -> pd.DataFrame:
         """
         Return a DataFrame of monthly returns for all constituents aligned to the
         maximal common intersection (max(start_dates), min(end_dates)).
-        Ensures each asset has monthly returns, computes them if only prices exist.
-        """
 
+        Parameters
+        ----------
+        ff5 : bool
+            If True, use USD prices/returns for Fama-French 5-factor regression.
+            Otherwise, use portfolio base currency.
+
+        Returns
+        -------
+        pd.DataFrame
+            Monthly returns for all assets.
+        """
 
         if not self.constituents:
             raise ValueError("Portfolio has no constituents")
@@ -132,26 +163,25 @@ class Portfolio:
 
         for t in self.constituents.keys():
             ent = self.data.get(t)
-
             if ent is None:
                 raise ValueError(f"No data for {t}. Add data first.")
 
-            # handle dict with monthly_returns
-            if isinstance(ent, dict) and 'monthly_returns' in ent:
-                s = ent['monthly_returns']
-            # handle raw price Series/DataFrame (legacy)
-            elif isinstance(ent, pd.DataFrame):
-                if 'Adj Close' in ent.columns:
-                    price = ent['Adj Close']
-                elif 'Close' in ent.columns:
-                    price = ent['Close']
+            # Pick series depending on ff5 flag
+            if use_usd:
+                if 'prices_usd' in ent:
+                    price_series = ent['prices_usd']
                 else:
-                    raise ValueError(f"No Close/Adj Close column for {t}")
-                s = self._price_to_monthly_returns(price)
-            elif isinstance(ent, pd.Series):
-                s = self._price_to_monthly_returns(ent)
+                    raise ValueError(f"No USD prices stored for {t} required for FF5.")
+                s = self._price_to_monthly_returns(price_series)
             else:
-                raise ValueError(f"Cannot interpret data for {t}")
+                if 'monthly_returns' in ent:
+                    s = ent['monthly_returns']
+                else:
+                    # fallback to base prices
+                    if 'prices' in ent:
+                        s = self._price_to_monthly_returns(ent['prices'])
+                    else:
+                        raise ValueError(f"No base currency prices/returns for {t}.")
 
             s = s.copy()
             s.name = t
@@ -160,8 +190,6 @@ class Portfolio:
         # --- compute maximal common range ---
         start_common = max(s.index.min() for s in series_list)
         end_common = min(s.index.max() for s in series_list)
-
-        #print(start_common, end_common)
 
         if start_common >= end_common:
             raise ValueError("No overlapping date range between assets.")
@@ -179,6 +207,7 @@ class Portfolio:
         self._common_range = (start_common, end_common)
 
         return df
+
 
 
 
