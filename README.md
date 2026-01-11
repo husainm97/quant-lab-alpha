@@ -1,8 +1,8 @@
 # 📊 quant-lab-alpha — Portfolio Factor Regression & Analysis Toolkit ![Python Version](https://img.shields.io/badge/python-3.12%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
-**Quant Lab Alpha** is a desktop analytics suite designed to bridge raw data and institutional-grade portfolio evaluation, combining **factor-based risk attribution, portfolio optimisation, and long-horizon scenario simulations** in one platform.
+**Quant Lab Alpha** is a desktop analytics suite designed to provide institutional-grade portfolio evaluation, combining **factor-based risk attribution, portfolio optimisation, and long-horizon scenario simulations** in one platform.
 
-Leveraging the **Fama–French Five-Factor (FF5) model**, the suite offers **rolling regressions**, **block-bootstrap simulations**, and **stabilised Markowitz optimisation** to uncover portfolio exposures, quantify potential outcomes, and model performance under both normal and stressed market conditions.
+Built on the **Fama–French Five-Factor (FF5) model**, the suite offers **rolling regressions**, **block-bootstrap simulations**, and **stabilised Markowitz optimisation** to uncover portfolio exposures, quantify potential outcomes, and model performance under both normal and stressed market conditions.
 
 ---
 
@@ -56,15 +56,10 @@ python main.py
 ```
 
 **Try a pre-built example portfolio immediately:**
-**In the GUI:**
 
-1. Click **"Import JSON"** → Select `examples/60_40_portfolio.json`
-2. Click **"Factor Regression"** → See FF5 exposures instantly
-3. Click **"Run Monte Carlo"** → 10,000 retirement simulations
-
-**Try stress testing:**
-- Move the "Return Shift" slider to -2.0% → Failure rate jumps to should increase
-- Set "Volatility Multiplier" to 1.5x → See the 5th-95th percentile envelope widen
+1. Click **"Import JSON"** → Select (for example) `examples/60_40_portfolio.json`
+2. Select your **Base Currency and preferred Factor Region**
+3. Click the various action buttons to produce dashboards
 
 **Build your own:**
 - Click **"Reset"** to clear the example
@@ -101,7 +96,7 @@ Load any via **Import JSON** to explore different risk profiles.
 
 ---
 
-## 1️⃣ Fama–French Five-Factor (FF5) Regressions  
+## 1️⃣ Fama–French Five-Factor (FF5) Regressions 📈
 **Implemented**
 
 ![Factor Regression](images/v-1-0-1/Factor_Regression_Light.png)  
@@ -117,7 +112,7 @@ Load any via **Import JSON** to explore different risk profiles.
 
 ---
 
-## 2️⃣ Markowitz Portfolio Optimiser  
+## 2️⃣ Markowitz Portfolio Optimiser 📊
 **Implemented**
 
 ![Markowitz Optimisation](images/v1-0-1/Markowitz_Light.png)
@@ -143,7 +138,7 @@ Load any via **Import JSON** to explore different risk profiles.
 
 ---
 
-## 4️⃣ Correlation Matrix  
+## 4️⃣ Correlation Matrix 🔗
 **Implemented**
 
 ![Correlation Matrix](images/v1-0-0/Correlation_Matrix.png)
@@ -154,7 +149,7 @@ Load any via **Import JSON** to explore different risk profiles.
 
 ---
 
-## 5️⃣ Monte Carlo Retirement Simulation  
+## 5️⃣ Monte Carlo Retirement Simulation 🎲
 **Implemented**
 
 ![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Light.png)
@@ -169,9 +164,9 @@ Load any via **Import JSON** to explore different risk profiles.
 - Multiple withdrawal strategies:
   - Fixed % of initial capital  
   - Fixed % of current capital  
-  - Guardrails (2.5–5%, based on curreny wealth)  
+  - Guardrails (2.5–5%, based on current wealth)  
   - Cash bucket strategy with fixed withdrawals
-- Inflation adjusted withdrawals  
+- Inflation-adjusted withdrawals  
 - Failure probability and terminal wealth analysis  
 
 **In Development**
