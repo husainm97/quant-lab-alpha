@@ -40,7 +40,7 @@ import statsmodels.api as sm
 from data.fetch_ff5 import fetch_ff5_monthly
 
 
-def create_simulation_settings(parent):
+def create_simulation_settings(parent, base_currency):
     frame = ttk.LabelFrame(parent, text="Simulation Settings", padding=5)
     
     # Example numeric fields
@@ -49,10 +49,10 @@ def create_simulation_settings(parent):
     target_years_var = tk.IntVar(value=30)
     n_bootstrap_var = tk.IntVar(value=2000)
     
-    for text, var_ in [("Start Capital ({portfolio_obj.base_currency})", start_capital_var),
-                        ("Target Wealth ({portfolio_obj.base_currency})", target_wealth_var),
-                        ("Target Years", target_years_var),
-                        ("Bootstrap Samples", n_bootstrap_var)]:
+    for text, var_ in [(f"Start Capital ({base_currency})", start_capital_var),
+                        (f"Target Wealth ({base_currency})", target_wealth_var),
+                        (f"Target Years", target_years_var),
+                        (f"Bootstrap Samples", n_bootstrap_var)]:
         ttk.Label(frame, text=text).pack(anchor="w")
         ttk.Entry(frame, textvariable=var_).pack(fill="x", pady=2)
     
@@ -196,7 +196,7 @@ def run_simulation(root, portfolio_obj=None, returns_df=None, config=None, is_da
     sidebar.pack(side="left", fill="y", padx=5, pady=5)
 
     # Simulation settings widgets
-    sim_frame, start_capital_var, target_wealth_var, target_years_var, n_bootstrap_var = create_simulation_settings(sidebar)
+    sim_frame, start_capital_var, target_wealth_var, target_years_var, n_bootstrap_var = create_simulation_settings(sidebar, portfolio_obj.base_currency)
     sim_frame.pack(fill="x", pady=5)
 
     # Strategy settings widgets

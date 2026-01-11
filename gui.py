@@ -2,8 +2,8 @@
 # gui.py — Quant Lab Alpha basic GUI for factor analysis
 
 """
-This file currently contains a basic tkinter GUI that allows building a portfolio from various sources and choosing leverage and withdrawal strategies. 
-Options for Markowitz optimisation, 5 factor analysis and retirement spending simulations are available. We are still to plug the right functions to the buttons!
+This file currently contains the main GUI implementation for Quant Lab Alpha. 
+Analysis suite currently offers Fama-French Factor Regressions, Markowitz Optimisation, Correlation Matrix, Risk Report (CVaR, drawdown) and Monte Carlo Simulations.
 """
 
 import tkinter as tk
@@ -18,7 +18,7 @@ import sv_ttk
 class PortfolioGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Portfolio Builder")
+        self.root.title("Quant Lab Alpha")
         self.root.geometry("850x750")
 
         self.root.update_idletasks()
@@ -58,7 +58,7 @@ class PortfolioGUI:
     # Portfolio Section
     # =============================
     def _build_portfolio_section(self):
-        frame = ttk.LabelFrame(self.root, text="Select Assets", padding=10)
+        frame = ttk.LabelFrame(self.root, text="Portfolio Builder", padding=10)
         frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         input_wrapper = ttk.Frame(frame)
@@ -125,7 +125,7 @@ class PortfolioGUI:
             if source.lower() == "yahoo":
                 df = fetch(f"Yahoo/{ticker}")
             else:
-                # You can extend this to other sources if you define them in your registry
+                # Placeholder for future extensions
                 df = fetch(f"{source}/{ticker}")
 
             if df.empty:
@@ -379,7 +379,7 @@ class PortfolioGUI:
         ttk.Label(
             main_frame, 
             text="Base Currency Settings",
-            font=("Arial", 12, "bold")
+            font=("Segoe UI", 16, "bold")
         ).pack(pady=(0, 10))
         
         # Description
@@ -418,89 +418,65 @@ class PortfolioGUI:
 
 
     def _show_region_info(self):
-        """Display information about Fama-French regional datasets"""
+        """Display information about Fama-French regional datasets in a spacious window"""
         info_win = tk.Toplevel(self.root)
         info_win.title("Fama-French Regional Datasets")
-        info_win.geometry("600x450")
-        info_win.resizable(False, False)
         
-        # Main frame with padding
-        main_frame = ttk.Frame(info_win, padding=15)
+        # 1. Expand the window size so no scrolling is needed
+        info_win.geometry("850x650") 
+        info_win.resizable(True, True)
+        
+        main_frame = ttk.Frame(info_win, padding=25)
         main_frame.pack(fill="both", expand=True)
         
-        # Title
+        # Header
         ttk.Label(
             main_frame, 
             text="Fama-French 5-Factor Regional Datasets",
-            font=("Arial", 12, "bold")
-        ).pack(pady=(0, 10))
+            font=("Segoe UI", 16, "bold")
+        ).pack(pady=(0, 20), anchor="w")
         
-        # Description
-        desc_text = (
-            "These datasets contain monthly returns for the Fama-French 5 factors:\n"
-            "• Mkt-RF: Market excess return over risk-free rate\n"
-            "• SMB: Small Minus Big (size premium)\n"
-            "• HML: High Minus Low (value premium)\n"
-            "• RMW: Robust Minus Weak (profitability premium)\n"
-            "• CMA: Conservative Minus Aggressive (investment premium)\n"
-            "• RF: Risk-free rate\n\n"
-            "Source: Kenneth R. French Data Library"
-        )
-        
-        ttk.Label(main_frame, text=desc_text, justify="left").pack(pady=(0, 15))
-        
-        # Region details in a scrollable text widget
-        text_frame = ttk.Frame(main_frame)
-        text_frame.pack(fill="both", expand=True)
-        
-        scrollbar = ttk.Scrollbar(text_frame)
-        scrollbar.pack(side="right", fill="y")
-        
+        # 2. Text widget configured to look like a document, not a "box"
         region_text = tk.Text(
-            text_frame, 
-            height=15, 
-            width=70, 
+            main_frame,
             wrap="word",
-            yscrollcommand=scrollbar.set,
-            font=("Arial", 9)
+            font=("Segoe UI", 10),
+            bg=info_win.cget("bg"), # Match system background
+            relief="flat",          # Remove borders
+            highlightthickness=0,   # Remove focus ring
+            cursor="arrow"          # Keep it feeling like an info page
         )
-        region_text.pack(side="left", fill="both", expand=True)
-        scrollbar.config(command=region_text.yview)
+        region_text.pack(fill="both", expand=True)
+
+        # 3. Precision Alignment Tags
+        # spacing1: space before paragraph | spacing2: space between wrapped lines
+        region_text.tag_configure("header", font=("Segoe UI", 11, "bold"), spacing1=15, spacing3=2)
+        region_text.tag_configure("body", lmargin1=0, lmargin2=0, spacing2=3)
+        region_text.tag_configure("source", font=("Segoe UI", 9, "italic"), foreground="gray", spacing1=30)
+
+        # Content structure
+        content = [
+            ("DEVELOPED MARKETS", "Includes 23 countries: Australia, Austria, Belgium, Canada, Switzerland, Germany, Denmark, Spain, Finland, France, Great Britain, Greece, Hong Kong, Ireland, Italy, Japan, Netherlands, Norway, New Zealand, Portugal, Sweden, Singapore, and United States. \nBest for: Global developed market exposure."),
+            ("UNITED STATES", "US market only. \nBest for: US-focused portfolios and domestic factor analysis."),
+            ("DEVELOPED EX-US", "All developed markets excluding the United States. \nBest for: International diversification and non-US developed exposure."),
+            ("JAPAN", "Japanese market only. \nBest for: Japan-specific analysis and Asian developed market focus."),
+            ("EMERGING MARKETS", "Includes major emerging economies across Asia, Latin America, Eastern Europe, and Africa. \nBest for: Emerging market exposure and growth-focused portfolios."),
+            ("ASIA PACIFIC EX-JAPAN", "Developed and emerging markets in Asia Pacific excluding Japan (Hong Kong, Singapore, Australia, New Zealand, Korea, Taiwan, etc.). \nBest for: Asian regional focus without Japan exposure.")
+        ]
+
+        # Insert logic
+        for title, desc in content:
+            region_text.insert("end", f"{title}\n", "header")
+            region_text.insert("end", f"{desc}\n", "body")
+            
+        region_text.insert("end", "\nSource: Kenneth R. French Data Library", "source")
         
-        # Region descriptions
-        regions_info = """DEVELOPED MARKETS
-    Includes 23 countries: Australia, Austria, Belgium, Canada, Switzerland, Germany, Denmark, Spain, Finland, France, Great Britain, Greece, Hong Kong, Ireland, Italy, Japan, Netherlands, Norway, New Zealand, Portugal, Sweden, Singapore, and United States.
-    Best for: Global developed market exposure
+        region_text.config(state="disabled")
 
-    UNITED STATES
-    US market only.
-    Best for: US-focused portfolios, domestic analysis
-
-    DEVELOPED EX-US
-    All developed markets excluding the United States.
-    Best for: International diversification, non-US developed exposure
-
-    JAPAN
-    Japanese market only.
-    Best for: Japan-specific analysis, Asian developed market focus
-
-    EMERGING MARKETS
-    Includes major emerging economies across Asia, Latin America, Eastern Europe, and Africa.
-    Best for: Emerging market exposure, growth-focused portfolios
-
-    ASIA PACIFIC EX-JAPAN
-    Developed and emerging markets in Asia Pacific excluding Japan (Hong Kong, Singapore, Australia, New Zealand, Korea, Taiwan, etc.).
-    Best for: Asian regional focus without Japan exposure"""
-        
-        region_text.insert("1.0", regions_info)
-        region_text.config(state="disabled")  # Make read-only
-        
-        # Close button
-        ttk.Button(
-            main_frame, 
-            text="Close", 
-            command=info_win.destroy
-        ).pack(pady=(10, 0))
+        # Close button at the bottom right
+        btn_frame = ttk.Frame(main_frame)
+        btn_frame.pack(fill="x", pady=(10, 0))
+        ttk.Button(btn_frame, text="Close", command=info_win.destroy).pack(side="right")
 
 
     def _apply_configuration(self):
@@ -680,11 +656,12 @@ class PortfolioGUI:
 
         # ... inside your function ...
         except Exception as e:
-            import traceback
+            #import traceback
             # This captures the full multi-line error log
-            full_error = traceback.format_exc()
-            print(full_error) # Prints to your terminal/console
-            messagebox.showerror("Detailed Error", f"Monte Carlo failed:\n\n{full_error}")
+            #full_error = traceback.format_exc()
+            #print(full_error) # Prints to your terminal/console
+            #messagebox.showerror("Detailed Error", f"Monte Carlo failed:\n\n{full_error}")
+            messagebox.showerror("Error", f"Monte Carlo simulation failed:\n{e}")
 
 if __name__ == "__main__":
     root = tk.Tk()
