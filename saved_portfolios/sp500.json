@@ -1,0 +1,7 @@
+{
+  "leverage": 1.0,
+  "interest_rate": 0.0,
+  "assets": [
+    {"Source": "Yahoo", "Ticker": "SPY", "Allocation": 100.0}
+  ]
+}
