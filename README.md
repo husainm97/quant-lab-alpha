@@ -32,7 +32,7 @@ These have been used solely to benchmark and validate analysis code within the J
 ## 🖥️ Interactive GUI (Tkinter)  
 **Implemented**
 
-![GUI](images/v1-0-1/GUI_Light.png.png)
+![GUI](images/v1-0-1/GUI_Light.png)
 
 - Simplified GUI-based portfolio builder  
 - Save and import portfolios and settings  
@@ -92,7 +92,7 @@ These have been used solely to benchmark and validate analysis code within the J
 **Implemented**
 
 ![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Light.png)
-![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Diag.png)
+![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Diag_Light.png)
 
 - Synthetic return histories generated via FF5-fitted models  
 - Block / bootstrap-style simulations  
