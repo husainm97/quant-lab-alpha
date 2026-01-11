@@ -5,7 +5,17 @@ import zipfile
 import io
 import requests
 
-def fetch_ff5_monthly():
+# Regional dataset URLs from Kenneth R. French Data Library
+FF5_REGIONS = {
+    "Developed": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Developed_5_Factors_CSV.zip",
+    "US": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_5_Factors_2x3_CSV.zip",
+    "Developed ex-US": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Developed_ex_US_5_Factors_CSV.zip",
+    "Japan": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Japan_5_Factors_CSV.zip",
+    "Emerging Markets": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Emerging_5_Factors_CSV.zip",
+    "Asia-Pacific ex-Japan": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Asia_Pacific_ex_Japan_5_Factors_CSV.zip",
+}
+
+def fetch_ff5_monthly(region="Developed"):
     """
     Fetches Fama-French 5-Factor monthly data for Developedmarkets,
     parses only the monthly rows, converts percentages to decimals,
@@ -28,8 +38,10 @@ def fetch_ff5_monthly():
     https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
     """
     
-    # Developed 5-Factor data URL
-    url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Developed_5_Factors_CSV.zip"
+    if region not in FF5_REGIONS:
+        raise ValueError(f"Unknown region '{region}'. Choose from: {list(FF5_REGIONS.keys())}")
+
+    url = FF5_REGIONS[region]
     
     
     try:

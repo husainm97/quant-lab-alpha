@@ -12,18 +12,22 @@ from simulations.portfolio_module import Portfolio
 from data.fetcher import fetch
 import json
 from tkinter import filedialog
+import sv_ttk
 
 
 class PortfolioGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Portfolio Builder")
-        self.root.geometry("720x550")
+        self.root.geometry("750x600")
 
         self.root.update_idletasks()
-        self.root.minsize(720, 550)
+        self.root.minsize(720, 600)
         self.root.resizable(True, True)
-        
+
+        sv_ttk.set_theme("light") # Start with light
+        self.is_dark = False
+
         self.portfolio = []
         self.strategy_params = {}
         self.leverage = 1.0
@@ -38,7 +42,17 @@ class PortfolioGUI:
         self._build_portfolio_section()
         self._build_leverage_section()
         #self._build_strategy_section()
+        self._build_config_section()
         self._build_action_section()
+
+    def toggle_theme(self):
+        if sv_ttk.get_theme() == "dark":
+            sv_ttk.set_theme("light")
+            self.is_dark=False
+        else:
+            sv_ttk.set_theme("dark")
+            self.is_dark=True
+
 
     # =============================
     # Portfolio Section
@@ -69,7 +83,7 @@ class PortfolioGUI:
 
         # --- Save/Load Portfolio ---
         file_frame = ttk.Frame(frame)
-        file_frame.grid(row=3, column=0, columnspan=9, pady=5)
+        file_frame.grid(row=3, column=0, columnspan=8, pady=5)
 
         ttk.Button(file_frame, text="Reset", command=self.reset_portfolio).pack(side="left", padx=5)
         ttk.Button(file_frame, text="Import JSON", command=self.import_portfolio).pack(side="left", padx=5)
@@ -203,29 +217,53 @@ class PortfolioGUI:
         
         if not file_path:
             return
-
+        
         try:
             with open(file_path, 'r') as f:
                 data = json.load(f)
-
+            
             # 1. Clear current portfolio
             self.reset_portfolio()
-
+            
             # 2. Set global parameters
             self.leverage_var.set(data.get("leverage", 1.0))
             self.interest_var.set(data.get("interest_rate", 0.0))
-
-            # 3. Batch Add Assets
-            for asset in data.get("assets", []):
-                # We set the UI variables so we can reuse your existing add_asset logic
+            
+            # 3. Create progress window
+            assets = data.get("assets", [])
+            progress_win = tk.Toplevel(self.root)
+            progress_win.title("Loading Portfolio")
+            progress_win.geometry("400x100")
+            progress_win.transient(self.root)
+            progress_win.grab_set()
+            
+            ttk.Label(progress_win, text="Fetching asset data...", font=("Arial", 10)).pack(pady=10)
+            
+            progress_bar = ttk.Progressbar(progress_win, length=350, mode='determinate', maximum=len(assets))
+            progress_bar.pack(pady=10)
+            
+            status_label = ttk.Label(progress_win, text="", font=("Arial", 9))
+            status_label.pack()
+            
+            # 4. Batch Add Assets with progress
+            for i, asset in enumerate(assets):
+                status_label.config(text=f"Loading {asset['Ticker']} ({i+1}/{len(assets)})")
+                progress_win.update()
+                
                 self.source_var.set(asset["Source"])
                 self.ticker_var.set(asset["Ticker"])
                 self.allocation_var.set(asset["Allocation"])
-                self.add_asset() # Reusing your existing validation and fetch logic
-
-            messagebox.showinfo("Import Success", "Portfolio loaded and data fetched.")
+                self.add_asset()
+                
+                progress_bar['value'] = i + 1
+                progress_win.update()
+            
+            progress_win.destroy()
+            messagebox.showinfo("Import Success", f"Loaded {len(assets)} assets successfully!")
             
         except Exception as e:
+            if 'progress_win' in locals():
+                progress_win.destroy()
             messagebox.showerror("Import Error", f"Failed to load file:\n{e}")
 
     # =============================
@@ -275,6 +313,207 @@ class PortfolioGUI:
             lev = 1.0
             rate = 0.0
         return lev, rate
+    
+
+    def _build_config_section(self):
+            """Build the configuration/settings section with auto-updates and info buttons"""
+            frame = ttk.LabelFrame(self.root, text="Configuration & Settings", padding=10)
+            frame.pack(fill="x", padx=10, pady=10)
+            
+            # --- Currency Settings ---
+            ttk.Label(frame, text="Base Currency:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+            
+            self.currency_var = tk.StringVar(value="USD")
+            currency_combo = ttk.Combobox(
+                frame,
+                textvariable=self.currency_var,
+                values=["USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "CNY", "INR"],
+                width=8,
+                state="readonly"
+            )
+            currency_combo.grid(row=0, column=1, sticky="w", padx=5, pady=5)
+            
+            # Restore Bind
+            currency_combo.bind("<<ComboboxSelected>>", lambda e: self._apply_configuration())
+            
+            # Restore Currency info button
+            ttk.Button(frame, text="?", width=3, 
+                    command=self._show_currency_info).grid(row=0, column=2, padx=5, pady=5)
+            
+            # --- Factor Region Settings ---
+            ttk.Label(frame, text="Factor Region:").grid(row=0, column=3, sticky="w", padx=(20, 5), pady=5)
+            
+            self.ff_region_var = tk.StringVar(value="Developed")
+            region_combo = ttk.Combobox(
+                frame,
+                textvariable=self.ff_region_var,
+                values=["Developed", "US", "Developed ex-US", "Japan", "Emerging Markets", "Asia-Pacific ex-Japan"],
+                width=20,
+                state="readonly"
+            )
+            region_combo.grid(row=0, column=4, sticky="w", padx=5, pady=5)
+            
+            # Restore Bind
+            region_combo.bind("<<ComboboxSelected>>", lambda e: self._apply_configuration())
+            
+            # Restore Region info button
+            ttk.Button(frame, text="?", width=3, 
+                    command=self._show_region_info).grid(row=0, column=5, padx=5, pady=5)
+            
+            # Add the toggle button
+            self.theme_button = ttk.Button(frame, text="Light/Dark", command=self.toggle_theme)
+            self.theme_button.grid(row=0, column=6, padx=10, pady=5)
+
+
+    def _show_currency_info(self):
+        """Display information about currency conversion"""
+        info_win = tk.Toplevel(self.root)
+        info_win.title("Currency Settings")
+        info_win.geometry("500x350")
+        info_win.resizable(False, False)
+        
+        main_frame = ttk.Frame(info_win, padding=15)
+        main_frame.pack(fill="both", expand=True)
+        
+        # Title
+        ttk.Label(
+            main_frame, 
+            text="Base Currency Settings",
+            font=("Arial", 12, "bold")
+        ).pack(pady=(0, 10))
+        
+        # Description
+        desc_text = (
+            "Select your preferred base currency for portfolio analysis.\n\n"
+            "All asset prices and returns will be converted to this currency "
+            "for consistent comparison and analysis.\n"
+            "Fama-French Factor regressions are calculated in USD.\n\n"
+            "Supported currencies:\n"
+            "• USD - United States Dollar\n"
+            "• EUR - Euro\n"
+            "• GBP - British Pound Sterling\n"
+            "• JPY - Japanese Yen\n"
+            "• CHF - Swiss Franc\n"
+            "• CAD - Canadian Dollar\n"
+            "• AUD - Australian Dollar\n"
+            "• CNY - Chinese Yuan\n"
+            "• INR - Indian Rupee\n\n"
+            "Note: Currency conversion uses historical exchange rates "
+            "to ensure accurate return calculations."
+        )
+        
+        ttk.Label(
+            main_frame, 
+            text=desc_text, 
+            justify="left",
+            wraplength=450
+        ).pack(pady=(0, 15))
+        
+        # Close button
+        ttk.Button(
+            main_frame, 
+            text="Close", 
+            command=info_win.destroy
+        ).pack(pady=(10, 0))
+
+
+    def _show_region_info(self):
+        """Display information about Fama-French regional datasets"""
+        info_win = tk.Toplevel(self.root)
+        info_win.title("Fama-French Regional Datasets")
+        info_win.geometry("600x450")
+        info_win.resizable(False, False)
+        
+        # Main frame with padding
+        main_frame = ttk.Frame(info_win, padding=15)
+        main_frame.pack(fill="both", expand=True)
+        
+        # Title
+        ttk.Label(
+            main_frame, 
+            text="Fama-French 5-Factor Regional Datasets",
+            font=("Arial", 12, "bold")
+        ).pack(pady=(0, 10))
+        
+        # Description
+        desc_text = (
+            "These datasets contain monthly returns for the Fama-French 5 factors:\n"
+            "• Mkt-RF: Market excess return over risk-free rate\n"
+            "• SMB: Small Minus Big (size premium)\n"
+            "• HML: High Minus Low (value premium)\n"
+            "• RMW: Robust Minus Weak (profitability premium)\n"
+            "• CMA: Conservative Minus Aggressive (investment premium)\n"
+            "• RF: Risk-free rate\n\n"
+            "Source: Kenneth R. French Data Library"
+        )
+        
+        ttk.Label(main_frame, text=desc_text, justify="left").pack(pady=(0, 15))
+        
+        # Region details in a scrollable text widget
+        text_frame = ttk.Frame(main_frame)
+        text_frame.pack(fill="both", expand=True)
+        
+        scrollbar = ttk.Scrollbar(text_frame)
+        scrollbar.pack(side="right", fill="y")
+        
+        region_text = tk.Text(
+            text_frame, 
+            height=15, 
+            width=70, 
+            wrap="word",
+            yscrollcommand=scrollbar.set,
+            font=("Arial", 9)
+        )
+        region_text.pack(side="left", fill="both", expand=True)
+        scrollbar.config(command=region_text.yview)
+        
+        # Region descriptions
+        regions_info = """DEVELOPED MARKETS
+    Includes 23 countries: Australia, Austria, Belgium, Canada, Switzerland, Germany, Denmark, Spain, Finland, France, Great Britain, Greece, Hong Kong, Ireland, Italy, Japan, Netherlands, Norway, New Zealand, Portugal, Sweden, Singapore, and United States.
+    Best for: Global developed market exposure
+
+    UNITED STATES
+    US market only.
+    Best for: US-focused portfolios, domestic analysis
+
+    DEVELOPED EX-US
+    All developed markets excluding the United States.
+    Best for: International diversification, non-US developed exposure
+
+    JAPAN
+    Japanese market only.
+    Best for: Japan-specific analysis, Asian developed market focus
+
+    EMERGING MARKETS
+    Includes major emerging economies across Asia, Latin America, Eastern Europe, and Africa.
+    Best for: Emerging market exposure, growth-focused portfolios
+
+    ASIA PACIFIC EX-JAPAN
+    Developed and emerging markets in Asia Pacific excluding Japan (Hong Kong, Singapore, Australia, New Zealand, Korea, Taiwan, etc.).
+    Best for: Asian regional focus without Japan exposure"""
+        
+        region_text.insert("1.0", regions_info)
+        region_text.config(state="disabled")  # Make read-only
+        
+        # Close button
+        ttk.Button(
+            main_frame, 
+            text="Close", 
+            command=info_win.destroy
+        ).pack(pady=(10, 0))
+
+
+    def _apply_configuration(self):
+        """Apply the selected configuration settings"""
+        currency = self.currency_var.get()
+        region = self.ff_region_var.get()
+        
+        # Store in portfolio object or global config
+        if hasattr(self, 'portfolio_obj'):
+            self.portfolio_obj.base_currency = currency
+            self.portfolio_obj.factor_region = region
+        
+
 
 
     '''
@@ -375,7 +614,7 @@ class PortfolioGUI:
 
             lev, rate = self.get_portfolio_leverage_settings()
             self.portfolio_obj.apply_leverage(lev, rate)
-            run_ff5_analysis(self.root, self.portfolio_obj)
+            run_ff5_analysis(self.root, self.portfolio_obj, self.is_dark)
         except Exception as e:
             messagebox.showerror("Error", f"Regression failed:\n{e}")
 
@@ -389,7 +628,7 @@ class PortfolioGUI:
 
             top = tk.Toplevel(self.root)
             top.title("Markowitz Efficient Frontier")
-            plot_markowitz_gui(top, self.portfolio_obj, risk_free=0.02, gui=self)
+            plot_markowitz_gui(top, self.portfolio_obj, risk_free=0.02, gui=self, is_dark=self.is_dark)
 
         except Exception as e:
             messagebox.showerror("Error", f"Markowitz optimisation failed:\n{e}")
@@ -404,7 +643,7 @@ class PortfolioGUI:
             top = tk.Toplevel(self.root)
             top.title("Asset Correlation Matrix")
 
-            plot_correlation_heatmap(top, self.portfolio_obj)
+            plot_correlation_heatmap(top, self.portfolio_obj, is_dark=self.is_dark)
 
         except Exception as e:
             import traceback
@@ -421,7 +660,7 @@ class PortfolioGUI:
 
             top = tk.Toplevel(self.root)
             top.title("Portfolio Risk Analytics")
-            plot_risk_dashboard(top, self.portfolio_obj)
+            plot_risk_dashboard(top, self.portfolio_obj, is_dark=self.is_dark)
         except Exception as e:
             messagebox.showerror("Error", f"Risk assessment failed:\n{e}")
 
@@ -437,7 +676,7 @@ class PortfolioGUI:
             top.title("Block Bootstrap Simulation")
             lev, rate = self.get_portfolio_leverage_settings()
             self.portfolio_obj.apply_leverage(lev, rate)
-            run_simulation(top, portfolio_obj=self.portfolio_obj)
+            run_simulation(top, portfolio_obj=self.portfolio_obj, is_dark=self.is_dark)
 
         # ... inside your function ...
         except Exception as e:
