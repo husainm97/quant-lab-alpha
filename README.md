@@ -143,6 +143,8 @@ Load any via **Import JSON** to explore different risk profiles.
 
 ![Correlation Matrix](images/v1-0-0/Correlation_Matrix.png)
 *Inter-asset correlation structure visualization*
+![Correlation Matrix](images/v1-0-1/Correlation_Pairise.png)
+*On click pairwise asset comparison*
 
 - Inter-asset correlation inspection  
 - Heatmap visualisation for rapid structure assessment  

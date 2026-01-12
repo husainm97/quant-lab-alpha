@@ -19,11 +19,6 @@
         },
         {
             "Source": "Yahoo",
-            "Ticker": "SXR8.DE",
-            "Allocation": 30.0
-        },
-        {
-            "Source": "Yahoo",
             "Ticker": "JPGL.DE",
             "Allocation": 8.0
         },
@@ -39,8 +34,8 @@
         },
         {
             "Source": "Yahoo",
-            "Ticker": "EXUS.DE",
-            "Allocation": 15.0
+            "Ticker": "EUNL.DE",
+            "Allocation": 45.0
         }
     ]
 }

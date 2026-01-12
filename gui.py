@@ -6,6 +6,7 @@ This file currently contains the main GUI implementation for Quant Lab Alpha.
 Analysis suite currently offers Fama-French Factor Regressions, Markowitz Optimisation, Correlation Matrix, Risk Report (CVaR, drawdown) and Monte Carlo Simulations.
 """
 
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 from simulations.portfolio_module import Portfolio
@@ -168,7 +169,7 @@ class PortfolioGUI:
 
         # Update the total allocation label
         self._update_total_allocation()
-        messagebox.showinfo("Deleted", f"Removed {len(selected_items)} asset(s) from portfolio.")
+        #messagebox.showinfo("Deleted", f"Removed {len(selected_items)} asset(s) from portfolio.")
 
     def reset_portfolio(self):
         self.portfolio.clear()
@@ -211,7 +212,14 @@ class PortfolioGUI:
             messagebox.showinfo("Success", "Portfolio saved successfully!")
 
     def import_portfolio(self):
+        save_dir = os.path.join(os.getcwd(), "saved_portfolios")
+
+        # Optional: Create the directory if it doesn't exist yet
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
         file_path = filedialog.askopenfilename(
+            initialdir=save_dir,  # <--- This line does the magic
             filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
         )
         
