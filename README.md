@@ -143,7 +143,7 @@ Load any via **Import JSON** to explore different risk profiles.
 
 ![Correlation Matrix](images/v1-0-0/Correlation_Matrix.png)
 *Inter-asset correlation structure visualization*
-![Correlation Matrix](images/v1-0-1/Correlation_Pairwise.png)
+![Correlation Pairwise](images/v1-0-1/Correlation_Pairwise.png)
 *On click pairwise asset comparison*
 
 - Inter-asset correlation inspection  
@@ -157,7 +157,7 @@ Load any via **Import JSON** to explore different risk profiles.
 ![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Light.png)
 *Distribution of wealth paths under different withdrawal strategies*
 
-![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Diag_Light.png)
+![Monte Carlo Diag](images/v1-0-1/Monte_Carlo_Diag_Light.png)
 *Diagnostic view showing synthetic pre-history extension and factor fit quality*
 
 - **Synthetic pre-history extension** via factor model + bootstrapped residuals 
