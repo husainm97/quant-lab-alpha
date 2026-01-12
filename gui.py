@@ -86,8 +86,8 @@ class PortfolioGUI:
         file_frame.grid(row=3, column=0, columnspan=8, pady=5)
 
         ttk.Button(file_frame, text="Reset", command=self.reset_portfolio).pack(side="left", padx=5)
-        ttk.Button(file_frame, text="Import JSON", command=self.import_portfolio).pack(side="left", padx=5)
-        ttk.Button(file_frame, text="Save Portfolio", command=self.save_portfolio).pack(side="left", padx=5)
+        ttk.Button(file_frame, text="Import", command=self.import_portfolio).pack(side="left", padx=5)
+        ttk.Button(file_frame, text="Save", command=self.save_portfolio).pack(side="left", padx=5)
 
         # Treeview for portfolio display
         columns = ("Source", "Ticker", "Allocation")
@@ -259,7 +259,7 @@ class PortfolioGUI:
                 progress_win.update()
             
             progress_win.destroy()
-            messagebox.showinfo("Import Success", f"Loaded {len(assets)} assets successfully!")
+            #messagebox.showinfo("Import Success", f"Loaded {len(assets)} assets successfully!")
             
         except Exception as e:
             if 'progress_win' in locals():
@@ -300,7 +300,7 @@ class PortfolioGUI:
 
         try:
             self.portfolio_obj.apply_leverage(lev, rate)
-            print(f"Applied leverage={self.portfolio_obj.leverage}, interest={self.portfolio_obj.interest_rate}")
+            #print(f"Applied leverage={self.portfolio_obj.leverage}, interest={self.portfolio_obj.interest_rate}")
         except ValueError as e:
             messagebox.showerror("Leverage Error", str(e))
 
@@ -486,7 +486,8 @@ class PortfolioGUI:
         
         # Store in portfolio object or global config
         if hasattr(self, 'portfolio_obj'):
-            self.portfolio_obj.base_currency = currency
+            #self.portfolio_obj.base_currency = currency
+            self.portfolio_obj.update_currency(currency) 
             self.portfolio_obj.factor_region = region
         
 

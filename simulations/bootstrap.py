@@ -45,9 +45,9 @@ def create_simulation_settings(parent, base_currency):
     
     # Example numeric fields
     start_capital_var = tk.DoubleVar(value=1_000_000)
-    target_wealth_var = tk.DoubleVar(value=2_700_000)
+    target_wealth_var = tk.DoubleVar(value=2_430_000)
     target_years_var = tk.IntVar(value=30)
-    n_bootstrap_var = tk.IntVar(value=2000)
+    n_bootstrap_var = tk.IntVar(value=10000)
     
     for text, var_ in [(f"Start Capital ({base_currency})", start_capital_var),
                         (f"Target Wealth ({base_currency})", target_wealth_var),
@@ -181,7 +181,7 @@ def run_simulation(root, portfolio_obj=None, returns_df=None, config=None, is_da
     MONTHS_PER_YEAR = 12
     INFLATION_RATE = config.get("INFLATION_RATE", 0.03)
     AVG_BLOCK_SIZE = config.get("BLOCK_SIZE", 60)
-    SEED = config.get("SEED", 42)
+    SEED = config.get("SEED", None) # Set to 42 for testing
     colors = get_theme_colors(is_dark)
 
     # --- CLEAR ROOT AND SETUP MAIN FRAME ---
