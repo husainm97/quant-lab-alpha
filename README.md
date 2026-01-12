@@ -99,7 +99,7 @@ Load any via **Import JSON** to explore different risk profiles.
 ## 1️⃣ Fama–French Five-Factor (FF5) Regressions 📈
 **Implemented**
 
-![Factor Regression](images/v-1-0-1/Factor_Regression_Light.png)  
+![Factor Regression](images/v-1-0-1/Factor_Regressions_Light.png)  
 *Static and rolling factor exposure analysis with contribution decomposition*
 
 ![Rolling Regressions](images/v1-0-1/Rolling_Regressions_Light.png)
