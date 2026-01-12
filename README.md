@@ -141,9 +141,9 @@ Load any via **Import JSON** to explore different risk profiles.
 ## 4️⃣ Correlation Matrix 🔗
 **Implemented**
 
-![Correlation Matrix](images/v1-0-0/Correlation_Matrix.png)
+![Correlation Matrix](images/v1-0-0/Correlation_Matrix.png)  
 *Inter-asset correlation structure visualization*
-![Correlation Pairwise](images/v1-0-1/Correlation_Pairwise.png)
+![Correlation Pairwise](images/v1-0-1/Correlation_Pairwise.png)  
 *On click pairwise asset comparison*
 
 - Inter-asset correlation inspection  
