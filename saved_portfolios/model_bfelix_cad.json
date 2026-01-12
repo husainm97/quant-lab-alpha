@@ -1,0 +1,36 @@
+{
+    "leverage": 1.0,
+    "interest_rate": 0.0,
+    "assets": [
+        {
+            "Source": "Yahoo",
+            "Ticker": "XIC.TO",
+            "Allocation": 30.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "VUN.TO",
+            "Allocation": 30.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "AVUV",
+            "Allocation": 10.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "XEF.TO",
+            "Allocation": 16.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "AVDV",
+            "Allocation": 6.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "XEC.TO",
+            "Allocation": 8.0
+        }
+    ]
+}
