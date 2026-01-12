@@ -99,7 +99,7 @@ Load any via **Import JSON** to explore different risk profiles.
 ## 1️⃣ Fama–French Five-Factor (FF5) Regressions 📈
 **Implemented**
 
-![Factor Regression](images/v-1-0-1/Factor_Regressions_Light.png)  
+![Factor Regression](images/v1-0-1/Factor_Regressions_Light.png)  
 *Static and rolling factor exposure analysis with contribution decomposition*
 
 ![Rolling Regressions](images/v1-0-1/Rolling_Regressions_Light.png)
@@ -143,7 +143,7 @@ Load any via **Import JSON** to explore different risk profiles.
 
 ![Correlation Matrix](images/v1-0-0/Correlation_Matrix.png)
 *Inter-asset correlation structure visualization*
-![Correlation Matrix](images/v1-0-1/Correlation_Pairise.png)
+![Correlation Matrix](images/v1-0-1/Correlation_Pairwise.png)
 *On click pairwise asset comparison*
 
 - Inter-asset correlation inspection  
