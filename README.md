@@ -141,7 +141,7 @@ Load any via **Import JSON** to explore different risk profiles.
 ## 4️⃣ Correlation Matrix 🔗
 **Implemented**
 
-![Correlation Matrix](images/v1-0-0/Correlation_Matrix.png)  
+![Correlation Matrix](images/v1-0-1/Correlation_Matrix_Light.png)  
 *Inter-asset correlation structure visualization*
 ![Correlation Pairwise](images/v1-0-1/Correlation_Pairwise.png)  
 *On click pairwise asset comparison*
@@ -155,7 +155,8 @@ Load any via **Import JSON** to explore different risk profiles.
 **Implemented**
 
 ![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Light.png)
-*Distribution of wealth paths under different withdrawal strategies*
+*Distribution of wealth paths under different withdrawal strategies  
+(showing S&P500 under 4% rule and 3% inflation adjusted speding)*
 
 ![Monte Carlo Diag](images/v1-0-1/Monte_Carlo_Diag_Light.png)
 *Diagnostic view showing synthetic pre-history extension and factor fit quality*
