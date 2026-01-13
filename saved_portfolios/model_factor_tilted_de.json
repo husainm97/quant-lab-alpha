@@ -4,16 +4,6 @@
     "assets": [
         {
             "Source": "Yahoo",
-            "Ticker": "SXR8.DE",
-            "Allocation": 29.0
-        },
-        {
-            "Source": "Yahoo",
-            "Ticker": "IS3N.DE",
-            "Allocation": 10.0
-        },
-        {
-            "Source": "Yahoo",
             "Ticker": "ZPRV.DE",
             "Allocation": 12.0
         },
@@ -24,23 +14,28 @@
         },
         {
             "Source": "Yahoo",
-            "Ticker": "VEU",
-            "Allocation": 16.0
-        },
-        {
-            "Source": "Yahoo",
-            "Ticker": "VEA",
-            "Allocation": 8.0
-        },
-        {
-            "Source": "Yahoo",
             "Ticker": "^STOXX",
             "Allocation": 10.0
         },
         {
             "Source": "Yahoo",
+            "Ticker": "JPGL.DE",
+            "Allocation": 8.0
+        },
+        {
+            "Source": "Yahoo",
             "Ticker": "IS3S.DE",
             "Allocation": 7.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "IS3N.DE",
+            "Allocation": 10.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "EUNL.DE",
+            "Allocation": 45.0
         }
     ]
 }

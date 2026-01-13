@@ -6,6 +6,7 @@ This file currently contains the main GUI implementation for Quant Lab Alpha.
 Analysis suite currently offers Fama-French Factor Regressions, Markowitz Optimisation, Correlation Matrix, Risk Report (CVaR, drawdown) and Monte Carlo Simulations.
 """
 
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 from simulations.portfolio_module import Portfolio
@@ -86,8 +87,8 @@ class PortfolioGUI:
         file_frame.grid(row=3, column=0, columnspan=8, pady=5)
 
         ttk.Button(file_frame, text="Reset", command=self.reset_portfolio).pack(side="left", padx=5)
-        ttk.Button(file_frame, text="Import JSON", command=self.import_portfolio).pack(side="left", padx=5)
-        ttk.Button(file_frame, text="Save Portfolio", command=self.save_portfolio).pack(side="left", padx=5)
+        ttk.Button(file_frame, text="Import", command=self.import_portfolio).pack(side="left", padx=5)
+        ttk.Button(file_frame, text="Save", command=self.save_portfolio).pack(side="left", padx=5)
 
         # Treeview for portfolio display
         columns = ("Source", "Ticker", "Allocation")
@@ -168,7 +169,7 @@ class PortfolioGUI:
 
         # Update the total allocation label
         self._update_total_allocation()
-        messagebox.showinfo("Deleted", f"Removed {len(selected_items)} asset(s) from portfolio.")
+        #messagebox.showinfo("Deleted", f"Removed {len(selected_items)} asset(s) from portfolio.")
 
     def reset_portfolio(self):
         self.portfolio.clear()
@@ -211,7 +212,14 @@ class PortfolioGUI:
             messagebox.showinfo("Success", "Portfolio saved successfully!")
 
     def import_portfolio(self):
+        save_dir = os.path.join(os.getcwd(), "saved_portfolios")
+
+        # Optional: Create the directory if it doesn't exist yet
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
         file_path = filedialog.askopenfilename(
+            initialdir=save_dir,  # <--- This line does the magic
             filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
         )
         
@@ -259,7 +267,7 @@ class PortfolioGUI:
                 progress_win.update()
             
             progress_win.destroy()
-            messagebox.showinfo("Import Success", f"Loaded {len(assets)} assets successfully!")
+            #messagebox.showinfo("Import Success", f"Loaded {len(assets)} assets successfully!")
             
         except Exception as e:
             if 'progress_win' in locals():
@@ -300,7 +308,7 @@ class PortfolioGUI:
 
         try:
             self.portfolio_obj.apply_leverage(lev, rate)
-            print(f"Applied leverage={self.portfolio_obj.leverage}, interest={self.portfolio_obj.interest_rate}")
+            #print(f"Applied leverage={self.portfolio_obj.leverage}, interest={self.portfolio_obj.interest_rate}")
         except ValueError as e:
             messagebox.showerror("Leverage Error", str(e))
 
@@ -486,7 +494,8 @@ class PortfolioGUI:
         
         # Store in portfolio object or global config
         if hasattr(self, 'portfolio_obj'):
-            self.portfolio_obj.base_currency = currency
+            #self.portfolio_obj.base_currency = currency
+            self.portfolio_obj.update_currency(currency) 
             self.portfolio_obj.factor_region = region
         
 

@@ -45,9 +45,9 @@ def create_simulation_settings(parent, base_currency):
     
     # Example numeric fields
     start_capital_var = tk.DoubleVar(value=1_000_000)
-    target_wealth_var = tk.DoubleVar(value=2_700_000)
+    target_wealth_var = tk.DoubleVar(value=2_430_000)
     target_years_var = tk.IntVar(value=30)
-    n_bootstrap_var = tk.IntVar(value=2000)
+    n_bootstrap_var = tk.IntVar(value=10000)
     
     for text, var_ in [(f"Start Capital ({base_currency})", start_capital_var),
                         (f"Target Wealth ({base_currency})", target_wealth_var),
@@ -181,7 +181,7 @@ def run_simulation(root, portfolio_obj=None, returns_df=None, config=None, is_da
     MONTHS_PER_YEAR = 12
     INFLATION_RATE = config.get("INFLATION_RATE", 0.03)
     AVG_BLOCK_SIZE = config.get("BLOCK_SIZE", 60)
-    SEED = config.get("SEED", 42)
+    SEED = config.get("SEED", None) # Set to 42 for testing
     colors = get_theme_colors(is_dark)
 
     # --- CLEAR ROOT AND SETUP MAIN FRAME ---
@@ -511,7 +511,9 @@ def run_simulation(root, portfolio_obj=None, returns_df=None, config=None, is_da
             n_bootstrap = n_bootstrap_var.get()
             wealth_paths = np.zeros((n_bootstrap, N_MONTHS + 1))
             wealth_paths[:, 0] = start_capital_var.get()
-            
+
+            '''
+            # 
             for b in range(n_bootstrap):
                 w = start_capital_var.get()
                 for t in range(N_MONTHS):
@@ -522,6 +524,24 @@ def run_simulation(root, portfolio_obj=None, returns_df=None, config=None, is_da
                         w = 0
                         break
                     wealth_paths[b, t+1] = w
+            '''
+
+            #'''
+            # Vectorised bootstrap
+            growth_factors = 1 + port_rets # Pre-calculate (n_bootstrap, N_MONTHS) matrix
+
+            for t in range(N_MONTHS):
+                # Update ALL 10,000 paths for month 't' in one line
+                wealth_paths[:, t+1] = wealth_paths[:, t] * growth_factors[:, t]
+                
+                # Calculate withdrawals for ALL paths at once
+                # (Requires strategy to handle a NumPy array)
+                w_amt = strategy(wealth_paths[:, t+1], year=t/12, inflation_rate=inflation)
+                wealth_paths[:, t+1] -= w_amt
+                
+                # Instant "Floor at Zero" for all paths
+                wealth_paths[:, t+1] = np.maximum(wealth_paths[:, t+1], 0)
+            #'''
 
             # Visualization
             xs = np.arange(N_MONTHS + 1) / 12
@@ -551,9 +571,9 @@ def run_simulation(root, portfolio_obj=None, returns_df=None, config=None, is_da
                 f"Fail Rate: {fail_rate:>5.1f}%\n"
                 f"P(Estate ≥ Target): {prob_target:>4.1f}%\n\n"
                 f"--- FINAL WEALTH ---\n"
-                f"P16: {portfolio_obj.base_currency}{p16/1e6:>5.2f}M\n"
-                f"P50: {portfolio_obj.base_currency}{p50/1e6:>5.2f}M\n"
-                f"P84: {portfolio_obj.base_currency}{p84/1e6:>5.2f}M"
+                f"P16: {portfolio_obj.base_currency}{p16/1e6:>7.2f}M\n"
+                f"P50: {portfolio_obj.base_currency}{p50/1e6:>7.2f}M\n"
+                f"P84: {portfolio_obj.base_currency}{p84/1e6:>7.2f}M"
             )
             stats_card.config(text=summary_txt)
 

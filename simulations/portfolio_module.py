@@ -103,21 +103,37 @@ class Portfolio:
                 'monthly_returns': monthly_returns
             }
 
-        self._normalize_weights()
-
     def remove_asset(self, ticker: str):
         """Remove an asset and its data from the portfolio."""
         if ticker in self.constituents:
             del self.constituents[ticker]
         if ticker in self.data:
             del self.data[ticker]
-        self._normalize_weights()
 
     def _normalize_weights(self):
         """Ensure total allocation sums to 1 (100%) unless leveraging."""
+        raise NotImplementedError
         total = sum(self.constituents.values())
         if total > 0:
             self.constituents = {k: v / total for k, v in self.constituents.items()}
+
+    def update_currency(self, new_currency):
+        """Recompute prices by tracking the current state of the data."""
+        old_currency = self.base_currency  # Where we are now
+        self.base_currency = new_currency  # Where we are going
+        
+        for ticker, ent in self.data.items():
+            # 1. Get the data in its CURRENT form (could be EUR, USD, etc.)
+            current_prices = ent['prices']
+            
+            # 2. Convert from the OLD base to the NEW base
+            # Note: We use old_currency here, NOT the ticker's native currency
+            converted = self._convert_to_base_currency(current_prices, old_currency, new_currency)
+            
+            # 3. Update the storage
+            ent['prices'] = converted
+            ent['monthly_returns'] = self._price_to_monthly_returns(converted)
+
 
     def total_allocation(self):
         """Return sum of weights (should be 1.0 for fully invested portfolios)."""
@@ -208,9 +224,6 @@ class Portfolio:
 
         return df
 
-
-
-
     def reset(self):
         """Clear the portfolio."""
         self.constituents.clear()
@@ -229,3 +242,4 @@ class Portfolio:
             "Interest Rate": self.interest_rate,
             "Total Allocation": self.total_allocation(),
         }
+    

@@ -1,0 +1,31 @@
+{
+    "leverage": 1.0,
+    "interest_rate": 0.0,
+    "assets": [
+        {
+            "Source": "Yahoo",
+            "Ticker": "IS3N.DE",
+            "Allocation": 8.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "ZPRV.DE",
+            "Allocation": 17.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "ZPRX.DE",
+            "Allocation": 5.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "IUSQ.DE",
+            "Allocation": 60.0
+        },
+        {
+            "Source": "Yahoo",
+            "Ticker": "^STOXX",
+            "Allocation": 10.0
+        }
+    ]
+}

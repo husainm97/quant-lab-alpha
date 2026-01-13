@@ -99,7 +99,7 @@ Load any via **Import JSON** to explore different risk profiles.
 ## 1️⃣ Fama–French Five-Factor (FF5) Regressions 📈
 **Implemented**
 
-![Factor Regression](images/v-1-0-1/Factor_Regression_Light.png)  
+![Factor Regression](images/v1-0-1/Factor_Regressions_Light.png)  
 *Static and rolling factor exposure analysis with contribution decomposition*
 
 ![Rolling Regressions](images/v1-0-1/Rolling_Regressions_Light.png)
@@ -141,8 +141,10 @@ Load any via **Import JSON** to explore different risk profiles.
 ## 4️⃣ Correlation Matrix 🔗
 **Implemented**
 
-![Correlation Matrix](images/v1-0-0/Correlation_Matrix.png)
+![Correlation Matrix](images/v1-0-1/Correlation_Matrix_Light.png)  
 *Inter-asset correlation structure visualization*
+![Correlation Pairwise](images/v1-0-1/Correlation_Pairwise.png)  
+*On click pairwise asset comparison*
 
 - Inter-asset correlation inspection  
 - Heatmap visualisation for rapid structure assessment  
@@ -153,9 +155,10 @@ Load any via **Import JSON** to explore different risk profiles.
 **Implemented**
 
 ![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Light.png)
-*Distribution of wealth paths under different withdrawal strategies*
+*Distribution of wealth paths under different withdrawal strategies  
+(showing S&P500 under 4% rule and 3% inflation adjusted speding)*
 
-![Monte Carlo Simulation](images/v1-0-1/Monte_Carlo_Diag_Light.png)
+![Monte Carlo Diag](images/v1-0-1/Monte_Carlo_Diag_Light.png)
 *Diagnostic view showing synthetic pre-history extension and factor fit quality*
 
 - **Synthetic pre-history extension** via factor model + bootstrapped residuals 
