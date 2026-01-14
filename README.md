@@ -1,4 +1,4 @@
-# 📊 quant-lab-alpha — Portfolio Factor Regression & Analysis Toolkit ![Python Version](https://img.shields.io/badge/python-3.12%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green) [![Github All Releases](https://img.shields.io/github/downloads/husainm97/quant-lab-alpha/total.svg)]()
+# 📊 quant-lab-alpha — Portfolio Factor Regression & Analysis Toolkit ![Python Version](https://img.shields.io/badge/python-3.12%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green) 
 
 **Quant Lab Alpha** is a desktop analytics suite designed to provide institutional-grade portfolio evaluation, combining **factor-based risk attribution, portfolio optimisation, and long-horizon scenario simulations** in one platform.
 
