@@ -143,7 +143,7 @@ Load any via **Import JSON** to explore different risk profiles.
 
 ![Correlation Matrix](images/v1-0-1/Correlation_Matrix_Light.png)  
 *Inter-asset correlation structure visualization*
-![Correlation Pairwise](images/v1-0-1/Correlation_Pairwise.png)  
+![Correlation Pairwise](images/v1-0-1/Correlation_Pairwise.png?v=2)  
 *On click pairwise asset comparison*
 
 - Inter-asset correlation inspection  
