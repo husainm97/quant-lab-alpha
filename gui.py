@@ -22,6 +22,8 @@ class PortfolioGUI:
         self.root.title("Quant Lab Alpha")
         self.root.geometry("850x750")
 
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
         self.root.update_idletasks()
         self.root.minsize(850, 750)
         self.root.resizable(True, True)
@@ -671,6 +673,12 @@ class PortfolioGUI:
             #print(full_error) # Prints to your terminal/console
             #messagebox.showerror("Detailed Error", f"Monte Carlo failed:\n\n{full_error}")
             messagebox.showerror("Error", f"Monte Carlo simulation failed:\n{e}")
+
+    def _on_close(self):
+        """Forces the application to quit and stops background threads."""
+        self.root.destroy()
+        import sys
+        sys.exit(0)
 
 if __name__ == "__main__":
     root = tk.Tk()
