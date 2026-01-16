@@ -22,7 +22,7 @@ class PortfolioGUI:
         self.root.title("Quant Lab Alpha")
         self.root.geometry("850x750")
 
-        self.root.protocol("WM_DELETE_WINDOW", lambda: self._on_close())
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
         self.root.update_idletasks()
         self.root.minsize(850, 750)
@@ -676,20 +676,8 @@ class PortfolioGUI:
 
     def _on_close(self):
         """Forces the application to quit and stops background threads."""
-        self.root.destroy()
-        import sys
-        sys.exit(0)
-
-    def _on_close(self):
-        """Forces the application to quit and stops background threads."""
-        
-        # 1. Stop the Tkinter mainloop
-        self.root.quit() 
-        # 2. Destroy the widgets
-        self.root.destroy()
-        # 3. Kill the Python process (including background threads)
-        import sys
-        sys.exit(0)
+        self.root.quit()     # Stop the mainloop
+        self.root.destroy()  # Destroy all widgets
 
 if __name__ == "__main__":
     root = tk.Tk()
