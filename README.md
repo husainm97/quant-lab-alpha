@@ -71,7 +71,7 @@ python main.py
 
 ### 📁 Example Portfolios Included
 
-| File | Strategy | Use Case |
+| File | Strategy | Use Case | 
 |------|----------|----------|
 | `60_40_portfolio.json` | 60% Stocks / 40% Bonds | Classic balanced allocation |
 | `all_weather.json` | Ray Dalio-style diversification | Low-correlation multi-asset |
