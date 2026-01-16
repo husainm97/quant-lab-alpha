@@ -18,6 +18,49 @@ if project_root not in sys.path:
 from simulations.portfolio_module import Portfolio
 from data.fetch_ff5 import fetch_ff5_monthly
 
+# ----------------------------------------------------------
+# Currently used in notebooks
+# ----------------------------------------------------------
+def prepare_etf(df, etf_col):
+    """
+    Prepare ETF returns DataFrame with columns ['ETF_TV','Market','SMB','HML','RMW','CMA','RF']
+    """
+    etf = df[[etf_col,'Mkt-RF','SMB','HML','RMW','CMA','RF']].copy()
+    etf.rename(columns={etf_col:'ETF_TV','Mkt-RF':'Market'}, inplace=True)
+    return etf
+
+def rolling_factor_loadings_5f(df, window):
+    X = sm.add_constant(df[['Mkt-RF','SMB','HML','RMW','CMA']])
+    betas = []
+    idx = []
+    for i in range(window, len(df)):
+        ywin = df['excess'].iloc[i-window:i]
+        Xwin = X.iloc[i-window:i]
+        model = sm.OLS(ywin, Xwin).fit()
+        betas.append(model.params.drop('const'))
+        idx.append(df.index[i])
+    return pd.DataFrame(betas, index=idx)
+
+def ff5_regression_core(portfolio_returns: pd.Series, ff_df: pd.DataFrame):
+    factor_cols = ["Mkt-RF", "SMB", "HML", "RMW", "CMA"]
+    common_idx = portfolio_returns.index.intersection(ff_df.index)
+    
+    if len(common_idx) == 0:
+        raise ValueError("No overlapping dates between portfolio returns and FF5 factors!")
+    
+    y = portfolio_returns.loc[common_idx] - ff_df.loc[common_idx, "RF"]
+    X = sm.add_constant(ff_df.loc[common_idx, factor_cols])
+    model = sm.OLS(y, X).fit()
+    
+    resid = model.resid
+    return {
+        "alpha": model.params["const"],
+        "betas": model.params[factor_cols].values,
+        "resid_std": resid.std(ddof=1),
+        "model": model
+    }
+# ----------------------------------------------------------
+
 # -----------------------------
 # Main popup logic
 # -----------------------------
@@ -97,7 +140,6 @@ def run_ff5_analysis(master, portfolio_obj: Portfolio = None, is_dark=False):
     canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
     stats_frame = ttk.LabelFrame(main_frame, text="Regression Statistics", padding=10)
-    stats_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
     
     text_box = tk.Text(stats_frame, width=85, height=35, wrap="word", 
                        font=("Consolas", 9), relief="flat", 
@@ -107,6 +149,20 @@ def run_ff5_analysis(master, portfolio_obj: Portfolio = None, is_dark=False):
     scrollbar = ttk.Scrollbar(stats_frame, command=text_box.yview)
     scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     text_box.config(yscrollcommand=scrollbar.set)
+
+    # Toggle button and state
+    stats_visible = tk.BooleanVar(value=False)
+    
+    def toggle_stats():
+        if stats_visible.get():
+            stats_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
+            toggle_btn.config(text="Hide Details <<")
+        else:
+            stats_frame.pack_forget()
+            toggle_btn.config(text="Show Details >>")
+        stats_visible.set(not stats_visible.get())
+    
+
 
     # -----------------------------
     # UI state variables
@@ -166,6 +222,7 @@ def run_ff5_analysis(master, portfolio_obj: Portfolio = None, is_dark=False):
         asset_col = selected_asset.get()
         combined = combined_data[asset_col]
         df = combined.copy()
+
         df["excess"] = df[asset_col] - df["RF"]
         factor_cols = ["Mkt-RF", "SMB", "HML", "RMW", "CMA"]
         Xfull = sm.add_constant(df[factor_cols])
@@ -257,6 +314,10 @@ def run_ff5_analysis(master, portfolio_obj: Portfolio = None, is_dark=False):
     ttk.Separator(control_frame, orient="vertical").pack(side=tk.LEFT, fill='y', padx=10)
     for txt, var in [("3y", show_3y), ("5y", show_5y), ("10y", show_10y)]:
         ttk.Checkbutton(control_frame, text=txt, variable=var, command=update_plot).pack(side=tk.LEFT, padx=3)
+
+    ttk.Separator(control_frame, orient="vertical").pack(side=tk.LEFT, fill='y', padx=10)
+    toggle_btn = ttk.Button(control_frame, text="Show Details >>", command=toggle_stats)
+    toggle_btn.pack(side=tk.LEFT, padx=5)
 
     selected_asset.trace_add("write", update_plot)
     plot_static()

@@ -123,6 +123,8 @@ def plot_correlation_heatmap(parent, portfolio_obj, method="pearson", is_dark=Fa
         ax2.plot(returns_df.index, cumulative1, label=asset1)
         ax2.plot(returns_df.index, cumulative2, label=asset2)
         ax2.set_title("Relative Growth (Cumulative)", fontsize=10)
+        ax2.set_xlabel(f"Year")
+        ax2.set_ylabel(f"{portfolio_obj.base_currency}")
         ax2.legend(fontsize='x-small')
         ax2.grid(True, alpha=0.2)
         
@@ -132,6 +134,8 @@ def plot_correlation_heatmap(parent, portfolio_obj, method="pearson", is_dark=Fa
         ax3.plot(returns_df.index, rolling_corr, color='purple', alpha=0.8)
         ax3.axhline(y=correlation, color='r', linestyle='--', linewidth=1, label='Mean')
         ax3.set_title("12-Month Rolling Correlation", fontsize=10)
+        ax3.set_xlabel(f"Year")
+        ax3.set_ylabel(f"Correlation")
         ax3.set_ylim(-1.1, 1.1)
         ax3.grid(True, alpha=0.2)
         
@@ -140,6 +144,8 @@ def plot_correlation_heatmap(parent, portfolio_obj, method="pearson", is_dark=Fa
         ax4.hist(ret1, bins=25, alpha=0.5, label=asset1, density=True)
         ax4.hist(ret2, bins=25, alpha=0.5, label=asset2, density=True)
         ax4.set_title("Return Frequency Distributions", fontsize=10)
+        ax4.set_xlabel(f"Monthly Returns")
+        ax4.set_ylabel(f"Frequency")
         ax4.xaxis.set_major_formatter(mtick.PercentFormatter(1.0))
         ax4.grid(True, alpha=0.2)
         
