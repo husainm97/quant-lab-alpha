@@ -9,13 +9,8 @@
         },
         {
             "Source": "Yahoo",
-            "Ticker": "ZPRV.DE",
-            "Allocation": 17.0
-        },
-        {
-            "Source": "Yahoo",
-            "Ticker": "ZPRX.DE",
-            "Allocation": 5.0
+            "Ticker": "AVWS.DE",
+            "Allocation": 22.0
         },
         {
             "Source": "Yahoo",

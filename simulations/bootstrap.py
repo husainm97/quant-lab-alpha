@@ -291,51 +291,50 @@ def run_simulation(root, portfolio_obj=None, returns_df=None, config=None, is_da
 
     # --- HELPER: EXTEND RETURNS DATA ---
     def extend_returns_data(N_MONTHS):
-        """Generate extended returns matrix and diagnostic data based on target months."""
-        rng = np.random.default_rng(SEED)
+        """
+        Generate extended returns matrix deterministically. 
+        Uses a one-time fit of factor data to extend history.
+        """
         n_existing = len(combined)
         n_needed = max(0, N_MONTHS - n_existing)
         
         factor_returns = combined[factor_cols].values
-        rf_series = combined['RF'].values
-
+        
         if n_needed > 0:
-            # Generate synchronized bootstrap indices
-            sync_indices = []
-            while len(sync_indices) < n_needed:
-                block_len = rng.geometric(1 / AVG_BLOCK_SIZE)
-                start = rng.integers(0, n_existing)
-                end = min(start + block_len, n_existing)
-                sync_indices.extend(range(start, end))
-            sync_indices = sync_indices[:n_needed]
-
-            # Synthetic data
-            synth_resids = all_resids_df.iloc[sync_indices].values
-            synth_factors = factor_returns[sync_indices]
+            # 1. Deterministic Factor Extension
+            # Instead of bootstrap, we tile the factor returns to reach n_needed
+            # This ensures if you run it 10M times, the 'extended' factor set is identical
+            indices = np.arange(n_needed) % n_existing
+            synth_factors = factor_returns[indices]
+            
+            # 2. Use the Model to Extend (Predict returns without residuals)
+            # synth_factor_pred shape: (n_needed, n_assets)
             synth_factor_pred = sm.add_constant(synth_factors) @ beta_matrix
 
-            # Extended returns
+            # 3. Construct Extended Returns
+            # Synthetic (Model Fit) followed by Historical (Actual Data)
             ext_rets = {
-                t: np.concatenate([combined[t].values, synth_factor_pred[:, i] + synth_resids[:, i]])
+                t: np.concatenate([synth_factor_pred[:, i], combined[t].values])
                 for i, t in enumerate(tickers)
             }
             returns_extended_df = pd.DataFrame(ext_rets)
 
-            # Diagnostic data
+            # --- Diagnostic data setup ---
             hist_port_returns = combined[tickers].values @ weights
-            synth_port_returns = (synth_factor_pred + synth_resids) @ weights
+            synth_port_returns = synth_factor_pred @ weights
             
+            # Create a deterministic index for the synthetic past
             synth_index = pd.date_range(end=combined.index[0] - pd.offsets.MonthEnd(1), 
-                                       periods=n_needed, freq='ME')
+                                        periods=n_needed, freq='ME')
             combined_index = synth_index.append(combined.index)
             combined_returns = np.concatenate([synth_port_returns, hist_port_returns])
             combined_prices = 100 * np.cumprod(1 + combined_returns)
             
-            # Factor fit for history only
-            X_factors = sm.add_constant(combined[factor_cols])
+            # Factor fit for visualization on the historical part
+            X_factors_hist = sm.add_constant(combined[factor_cols])
             port_excess = hist_port_returns - combined['RF'].values
-            port_model = sm.OLS(port_excess, X_factors).fit()
-            port_fit_returns = port_model.predict(X_factors) + combined['RF'].values
+            port_model = sm.OLS(port_excess, X_factors_hist).fit()
+            port_fit_returns = port_model.predict(X_factors_hist) + combined['RF'].values
             
             price_at_hist_start = combined_prices[n_needed - 1]
             port_fit_prices = price_at_hist_start * np.cumprod(1 + port_fit_returns)
@@ -352,9 +351,8 @@ def run_simulation(root, portfolio_obj=None, returns_df=None, config=None, is_da
                 'n_needed': n_needed
             }
         else:
+            # Case where existing history is long enough
             returns_extended_df = combined[tickers]
-            
-            # Diagnostic data for no extension case
             hist_port_returns = combined[tickers].values @ weights
             X_factors = sm.add_constant(combined[factor_cols])
             port_excess = hist_port_returns - combined['RF'].values
@@ -374,11 +372,12 @@ def run_simulation(root, portfolio_obj=None, returns_df=None, config=None, is_da
                 'n_needed': 0
             }
 
-        # Apply FX conversion if needed
+        # Apply FX conversion if needed (Deterministic tiling)
         returns_matrix = returns_extended_df.values
         if portfolio_obj.base_currency != "USD":
             if n_needed > 0:
-                fx_extended = np.concatenate([fx_returns_hist, fx_returns_hist[sync_indices]])
+                fx_indices = np.arange(len(returns_matrix)) % len(fx_returns_hist)
+                fx_extended = fx_returns_hist[fx_indices]
             else:
                 fx_extended = fx_returns_hist[:N_MONTHS]
             returns_matrix = (1 + returns_matrix) * (1 + fx_extended[:, np.newaxis]) - 1
